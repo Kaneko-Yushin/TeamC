@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>介護記録デモ（モック）</title>
+<style>
+  :root{
+    --bg:#f6f8fb;
+    --card:#ffffff;
+    --muted:#6b7280;
+    --accent:#0ea5a4;
+    --danger:#ef4444;
+    --radius:14px;
+    font-family: system-ui,-apple-system,"Segoe UI","Noto Sans JP","Hiragino Kaku Gothic ProN","Yu Gothic","Roboto","Helvetica Neue",Arial;
+  }
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,#eef2f7 0%,var(--bg) 100%);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+
+  .app{
+    width:100%;
+    max-width:420px;
+    box-shadow:0 10px 30px rgba(13,42,64,0.12);
+    border-radius:18px;
+    overflow:hidden;
+    background:var(--card);
+  }
+
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    background:linear-gradient(90deg,#ffffff,#f8fafc);
+    border-bottom:1px solid #eef2f6;
+  }
+  .brand{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .logo{
+    width:40px;height:40px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#10b981,#06b6d4);
+    color:white;font-weight:700;font-size:18px;
+    box-shadow:0 4px 10px rgba(6,95,87,0.12);
+  }
+  h1{font-size:16px;margin:0;color:#0f172a;}
+  .controls{display:flex;gap:8px;align-items:center;}
+
+  .lang-btn{
+    padding:8px 10px;border-radius:10px;border:none;background:transparent;
+    font-size:13px;color:var(--muted);cursor:pointer;
+  }
+  .lang-btn.active{background:#ecfeff;color:var(--accent);border:1px solid #bff0ef;}
+
+  main{padding:14px;}
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* User list */
+  .users{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .user{
+    background:linear-gradient(180deg,#ffffff,#fbfdff);
+    padding:12px;border-radius:12px;display:flex;gap:10px;align-items:center;cursor:pointer;
+    border:1px solid #f1f5f9;
+  }
+  .avatar{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#f97316,#f59e0b);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+  .uinfo{flex:1;}
+  .name{font-weight:700;color:#06202a}
+  .sub{font-size:13px;color:var(--muted)}
+
+  /* Card */
+  .card{background:var(--card);padding:12px;border-radius:12px;border:1px solid #eef2f6;margin-bottom:10px;}
+
+  /* Big options */
+  .options{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px;}
+  .opt{
+    background:#fbfdff;border-radius:12px;padding:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    border:1px solid #eef2f6;font-weight:700;font-size:13px;cursor:pointer;min-height:68px;
+  }
+  .opt.subtle{font-weight:600;font-size:12px;color:var(--muted)}
+  .opt.toggled{box-shadow:0 6px 18px rgba(2,132,199,0.12);transform:translateY(-4px);border-color:rgba(2,132,199,0.18)}
+  .opt .emoji{font-size:22px;margin-bottom:6px}
+
+  /* Body state */
+  .body-states{display:flex;gap:8px;margin-top:8px;}
+  .pill{flex:1;padding:10px;border-radius:12px;text-align:center;font-weight:700;cursor:pointer;border:1px solid #eef2f6}
+  .pill.toggled{background:#ecfeff;color:var(--accent);border-color:#bff0ef;box-shadow:0 6px 18px rgba(6,95,87,0.06);transform:translateY(-3px)}
+
+  textarea{
+    width:100%;min-height:80px;border-radius:10px;padding:10px;border:1px solid #eef2f6;font-size:14px;resize:vertical;
+  }
+
+  .row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .save-btn{
+    width:100%;padding:12px;border-radius:12px;border:none;background:var(--accent);color:white;font-weight:800;font-size:16px;margin-top:8px;cursor:pointer;
+    box-shadow:0 6px 18px rgba(6,95,87,0.12);
+  }
+
+  .muted{color:var(--muted);font-size:13px}
+  .tiny{font-size:12px;color:#94a3b8}
+
+  /* confirmation */
+  .confirm{padding:12px;border-radius:12px;background:linear-gradient(90deg,#ecfeff,#e6fffb);border:1px solid #bff0ef;color:#064e49;font-weight:700}
+
+  footer{padding:10px 14px;background:#ffffff;border-top:1px solid #eef2f6;font-size:13px;color:var(--muted);text-align:center}
+
+  @media (min-width:720px){
+    body{background:linear-gradient(180deg,#eef2f7 0%,#ffffff 100%);}
+  }
+</style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="介護記録デモ">
+    <header>
+      <div class="brand">
+        <div class="logo">介</div>
+        <div>
+          <h1 id="title">デイケア記録</h1>
+          <div class="tiny" id="subtitle">タップで簡単記録</div>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="langToggle" class="lang-btn" aria-label="言語切替">日本語</button>
+      </div>
+    </header>
+
+    <main>
+      <!-- Screen: user list -->
+      <section id="screen-list" class="screen active" aria-live="polite">
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="muted" id="listLabel">利用者を選択</div>
+              <div style="font-weight:700">今日の担当</div>
+            </div>
+            <div class="tiny">プロトタイプ</div>
+          </div>
+        </div>
+
+        <div class="users" id="userGrid" aria-label="利用者一覧">
+          <!-- users populated by JS -->
+        </div>
+      </section>
+
+      <!-- Screen: record input -->
+      <section id="screen-record" class="screen" aria-live="polite">
+        <div class="row" style="margin-bottom:8px;">
+          <div>
+            <div class="muted" id="recordFor">記録対象</div>
+            <div style="font-weight:800" id="recordName">田中 太郎</div>
+            <div class="tiny" id="recordRoom">部屋: 101</div>
+          </div>
+          <button id="backBtn" class="lang-btn" aria-label="戻る">戻る</button>
+        </div>
+
+        <div class="card">
+          <div class="muted" id="mealLabel">食事</div>
+          <div class="options" id="mealOpts">
+            <div class="opt" data-key="meal" data-value="full"><div class="emoji">🍚</div>完食</div>
+            <div class="opt" data-key="meal" data-value="half"><div class="emoji">🥢</div>半分</div>
+            <div class="opt" data-key="meal" data-value="little"><div class="emoji">🍽️</div>少し</div>
+            <div class="opt" data-key="meal" data-value="refuse"><div class="emoji">🚫</div>拒否</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted" id="medLabel">服薬</div>
+          <div class="options" id="medOpts">
+            <div class="opt" data-key="med" data-value="ok"><div class="emoji">💊</div>飲んだ</div>
+            <div class="opt" data-key="med" data-value="refuse"><div class="emoji">✖️</div>拒否</div>
+            <div class="opt" data-key="med" data-value="miss"><div class="emoji">⚠️</div>忘れ</div>
+            <div class="opt subtle" data-key="med" data-value="n/a"><div class="emoji">—</div>不要</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted" id="toiletLabel">排泄</div>
+          <div class="options" id="toiletOpts">
+            <div class="opt" data-key="toilet" data-value="urine"><div class="emoji">🚽</div>尿</div>
+            <div class="opt" data-key="toilet" data-value="stool"><div class="emoji">💩</div>便</div>
+            <div class="opt" data-key="toilet" data-value="both"><div class="emoji">⚪</div>両方</div>
+            <div class="opt subtle" data-key="toilet" data-value="none"><div class="emoji">—</div>なし</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="muted" id="statusLabel">体調</div>
+          <div class="body-states" id="moodOpts">
+            <div class="pill" data-key="mood" data-value="good">😊 良い</div>
+            <div class="pill" data-key="mood" data-value="ok">😐 普通</div>
+            <div class="pill" data-key="mood" data-value="bad">😞 悪い</div>
+          </div>
+          <div style="margin-top:10px;" id="noteLabel">メモ (任意)</div>
+          <textarea id="note" placeholder="短いメモを入力。音声入力は将来対応予定"></textarea>
+        </div>
+
+        <button id="saveBtn" class="save-btn">記録を保存</button>
+      </section>
+
+      <!-- Screen: confirmation / review -->
+      <section id="screen-confirm" class="screen" aria-live="polite">
+        <div class="card">
+          <div class="confirm" id="confirmMsg">保存しました！</div>
+          <div style="margin-top:10px;">
+            <div class="muted">今日の記録（プレビュー）</div>
+            <div style="margin-top:8px;font-weight:800" id="previewName">田中 太郎</div>
+            <div class="tiny" id="previewTime">—</div>
+
+            <div style="margin-top:10px;">
+              <div class="muted">食事</div>
+              <div id="pvMeal" style="font-weight:700;margin-bottom:8px">—</div>
+
+              <div class="muted">服薬</div>
+              <div id="pvMed" style="font-weight:700;margin-bottom:8px">—</div>
+
+              <div class="muted">排泄</div>
+              <div id="pvToilet" style="font-weight:700;margin-bottom:8px">—</div>
+
+              <div class="muted">体調</div>
+              <div id="pvMood" style="font-weight:700;margin-bottom:8px">—</div>
+
+              <div class="muted">メモ</div>
+              <div id="pvNote" style="font-weight:700">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;">
+          <button id="newRecord" class="save-btn" style="flex:1;background:#0ea5a4">別の記録を作成</button>
+          <button id="toList" class="save-btn" style="flex:1;background:#e2e8f0;color:#0f172a">利用者へ戻る</button>
+        </div>
+      </section>
+
+    </main>
+
+    <footer>
+      デモ版 — 使いやすさ重視のプロトタイプ
+    </footer>
+  </div>
+
+<script>
+/* =============================
+   デモ用データと翻訳
+   ============================= */
+const USERS = [
+  { id: 'u1', name_jp: '田中 太郎', name_en: 'Taro Tanaka', room: '101' },
+  { id: 'u2', name_jp: '鈴木 花子', name_en: 'Hanako Suzuki', room: '102' },
+  { id: 'u3', name_jp: 'Nguyen Van A', name_en: 'Nguyen Van A', room: '201' },
+  { id: 'u4', name_jp: '李 小梅', name_en: 'Li Xiaomei', room: '202' },
+];
+
+const T = {
+  ja: {
+    title: 'デイケア記録',
+    subtitle: 'タップで簡単記録',
+    listLabel: '利用者を選択',
+    meal: '食事',
+    med: '服薬',
+    toilet: '排泄',
+    status: '体調',
+    note: 'メモ (任意)',
+    save: '記録を保存',
+    saved: '保存しました！',
+    newRecord: '別の記録を作成',
+    toList: '利用者へ戻る',
+    back: '戻る'
+  },
+  en: {
+    title: 'Care Log',
+    subtitle: 'Quick tap entries',
+    listLabel: 'Select person',
+    meal: 'Meal',
+    med: 'Medication',
+    toilet: 'Toilet',
+    status: 'Condition',
+    note: 'Note (optional)',
+    save: 'Save record',
+    saved: 'Saved!',
+    newRecord: 'Create another',
+    toList: 'Back to list',
+    back: 'Back'
+  }
+};
+
+let lang = 'ja'; // 初期言語
+let currentUser = null;
+let currentRecord = {};
+
+/* ==============
+   要素キャッシュ
+   ============== */
+const userGrid = document.getElementById('userGrid');
+const screenList = document.getElementById('screen-list');
+const screenRecord = document.getElementById('screen-record');
+const screenConfirm = document.getElementById('screen-confirm');
+
+const titleEl = document.getElementById('title');
+const subtitleEl = document.getElementById('subtitle');
+const listLabel = document.getElementById('listLabel');
+const mealLabel = document.getElementById('mealLabel');
+const medLabel = document.getElementById('medLabel');
+const toiletLabel = document.getElementById('toiletLabel');
+const statusLabel = document.getElementById('statusLabel');
+const noteLabel = document.getElementById('noteLabel');
+const saveBtn = document.getElementById('saveBtn');
+
+const recordName = document.getElementById('recordName');
+const recordRoom = document.getElementById('recordRoom');
+const backBtn = document.getElementById('backBtn');
+
+const langToggle = document.getElementById('langToggle');
+
+const pvName = document.getElementById('previewName');
+const pvTime = document.getElementById('previewTime');
+const pvMeal = document.getElementById('pvMeal');
+const pvMed = document.getElementById('pvMed');
+const pvToilet = document.getElementById('pvToilet');
+const pvMood = document.getElementById('pvMood');
+const pvNote = document.getElementById('pvNote');
+
+const newRecordBtn = document.getElementById('newRecord');
+const toListBtn = document.getElementById('toList');
+
+const noteInput = document.getElementById('note');
+
+/* ============
+   初期レンダー
+   ============ */
+function renderUsers(){
+  userGrid.innerHTML = '';
+  for(const u of USERS){
+    const div = document.createElement('div');
+    div.className = 'user';
+    div.tabIndex = 0;
+    div.setAttribute('role','button');
+    div.innerHTML = `
+      <div class="avatar">${u.name_jp.charAt(0)}</div>
+      <div class="uinfo">
+        <div class="name">${lang === 'ja' ? u.name_jp : u.name_en}</div>
+        <div class="sub">Room ${u.room}</div>
+      </div>
+    `;
+    div.addEventListener('click', ()=> openRecord(u));
+    div.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openRecord(u) });
+    userGrid.appendChild(div);
+  }
+}
+
+function applyTranslations(){
+  const t = T[lang];
+  titleEl.textContent = t.title;
+  subtitleEl.textContent = t.subtitle;
+  listLabel.textContent = t.listLabel;
+  mealLabel.textContent = t.meal;
+  medLabel.textContent = t.med;
+  toiletLabel.textContent = t.toilet;
+  statusLabel.textContent = t.status;
+  noteLabel.textContent = t.note;
+  saveBtn.textContent = t.save;
+  document.getElementById('confirmMsg').textContent = t.saved;
+  newRecordBtn.textContent = t.newRecord;
+  toListBtn.textContent = t.toList;
+  backBtn.textContent = t.back;
+  langToggle.textContent = (lang==='ja' ? '日本語' : 'English');
+
+  // update user names
+  renderUsers();
+}
+
+/* ============
+   画面遷移
+   ============ */
+function showScreen(screen){
+  screenList.classList.remove('active');
+  screenRecord.classList.remove('active');
+  screenConfirm.classList.remove('active');
+  screen.classList.add('active');
+}
+
+function openRecord(user){
+  currentUser = user;
+  currentRecord = {
+    userId: user.id,
+    ts: new Date().toISOString(),
+    meal: null,
+    med: null,
+    toilet: null,
+    mood: null,
+    note: ''
+  };
+  recordName.textContent = (lang==='ja' ? user.name_jp : user.name_en);
+  recordRoom.textContent = '部屋: ' + user.room;
+  noteInput.value = '';
+  clearToggles();
+  showScreen(screenRecord);
+}
+
+/* ============
+   トグル処理
+   ============ */
+function clearToggles(){
+  document.querySelectorAll('.opt').forEach(el=>el.classList.remove('toggled'));
+  document.querySelectorAll('.pill').forEach(el=>el.classList.remove('toggled'));
+}
+
+function setToggle(el){
+  const key = el.getAttribute('data-key');
+  const value = el.getAttribute('data-value');
+  // 同じグループの要素をoffにする
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(x=>x.classList.remove('toggled'));
+  el.classList.add('toggled');
+  currentRecord[key] = value;
+}
+
+/* attach listeners for all toggleable items */
+document.addEventListener('click', (e)=>{
+  const opt = e.target.closest('.opt');
+  if(opt && opt.hasAttribute('data-key')){
+    setToggle(opt);
+  }
+  const pill = e.target.closest('.pill');
+  if(pill && pill.hasAttribute('data-key')){
+    setToggle(pill);
+  }
+});
+
+/* ============
+   保存（簡易ローカル保存）
+   ============ */
+function saveRecord(){
+  currentRecord.note = noteInput.value.trim();
+  currentRecord.ts = new Date().toISOString();
+  // load existing demo storage
+  let arr = JSON.parse(localStorage.getItem('care_demo_records') || '[]');
+  arr.push(currentRecord);
+  localStorage.setItem('care_demo_records', JSON.stringify(arr));
+  showPreview();
+}
+
+function showPreview(){
+  if(!currentUser) return;
+  pvName.textContent = (lang==='ja' ? currentUser.name_jp : currentUser.name_en);
+  pvTime.textContent = new Date(currentRecord.ts).toLocaleString();
+  pvMeal.textContent = mapValue('meal', currentRecord.meal);
+  pvMed.textContent = mapValue('med', currentRecord.med);
+  pvToilet.textContent = mapValue('toilet', currentRecord.toilet);
+  pvMood.textContent = mapValue('mood', currentRecord.mood);
+  pvNote.textContent = currentRecord.note || (lang==='ja' ? 'なし' : '—');
+  showScreen(screenConfirm);
+}
+
+/* map value keys to readable text */
+function mapValue(key, val){
+  const map = {
+    meal: {
+      full: lang==='ja' ? '完食' : 'Full',
+      half: lang==='ja' ? '半分' : 'Half',
+      little: lang==='ja' ? '少し' : 'Little',
+      refuse: lang==='ja' ? '拒否' : 'Refused',
+      null: lang==='ja' ? '未設定' : '—'
+    },
+    med: {
+      ok: lang==='ja' ? '飲んだ' : 'Taken',
+      refuse: lang==='ja' ? '拒否' : 'Refused',
+      miss: lang==='ja' ? '忘れ' : 'Missed',
+      'n/a': lang==='ja' ? '不要' : 'N/A',
+      null: lang==='ja' ? '未設定' : '—'
+    },
+    toilet: {
+      urine: lang==='ja' ? '尿' : 'Urine',
+      stool: lang==='ja' ? '便' : 'Stool',
+      both: lang==='ja' ? '両方' : 'Both',
+      none: lang==='ja' ? 'なし' : 'None',
+      null: lang==='ja' ? '未設定' : '—'
+    },
+    mood: {
+      good: lang==='ja' ? '良い' : 'Good',
+      ok: lang==='ja' ? '普通' : 'OK',
+      bad: lang==='ja' ? '悪い' : 'Bad',
+      null: lang==='ja' ? '未設定' : '—'
+    }
+  };
+  if(!val) return map[key].null || '—';
+  return map[key][val] || '—';
+}
+
+/* ============
+   UI イベント
+   ============ */
+saveBtn.addEventListener('click', ()=> {
+  saveRecord();
+});
+
+backBtn.addEventListener('click', ()=> {
+  showScreen(screenList);
+});
+
+newRecordBtn.addEventListener('click', ()=> {
+  // same user, clear form to make a new record
+  openRecord(currentUser);
+});
+
+toListBtn.addEventListener('click', ()=> {
+  currentUser = null;
+  showScreen(screenList);
+});
+
+langToggle.addEventListener('click', ()=> {
+  lang = (lang === 'ja' ? 'en' : 'ja');
+  applyTranslations();
+});
+
+/* 初期処理 */
+applyTranslations();
+renderUsers();
+
+/* ============================
+   開発メモ（デモ用の工夫／拡張案）
+   - localStorage への保存を有効にしているため、実機で連続操作の確認ができます。
+   - 本番ではオフライン保存（IndexedDB） + 同期ロジックを実装すると良いです。
+   - 多言語は現状ラベルのみ。将来的に翻訳辞書（医療用語辞書）で意味の揺れを防ぎます。
+   - 音声入力やアイコン差し替え、タップ長押しでの詳細入力なども検討できます。
+   ============================ */
+</script>
+</body>
+</html>
