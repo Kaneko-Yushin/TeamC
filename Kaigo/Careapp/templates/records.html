@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記録一覧</title>
+</head>
+<body>
+  <h2>記録一覧</h2>
+  <table border="1" cellpadding="5">
+    <tr>
+      <th>ID</th>
+      <th>食事</th>
+      <th>服薬</th>
+      <th>排泄</th>
+      <th>体調</th>
+      <th>メモ</th>
+    </tr>
+    {% for row in rows %}
+    <tr>
+      <td>{{ row[0] }}</td>
+      <td>{{ row[1] }}</td>
+      <td>{{ row[2] }}</td>
+      <td>{{ row[3] }}</td>
+      <td>{{ row[4] }}</td>
+      <td>{{ row[5] }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <p><a href="/">← 記録入力へ戻る</a></p>
+</body>
+</html>

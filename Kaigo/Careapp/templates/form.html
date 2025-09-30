@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記録入力</title>
+</head>
+<body>
+  <h2>記録入力</h2>
+  <form action="/save" method="post">
+    <p>🍚 食事: 
+      <select name="meal">
+        <option>完食</option>
+        <option>半分</option>
+        <option>少し</option>
+        <option>拒否</option>
+      </select>
+    </p>
+
+    <p>💊 服薬: 
+      <select name="medication">
+        <option>飲んだ</option>
+        <option>拒否</option>
+        <option>忘れ</option>
+      </select>
+    </p>
+
+    <p>🚽 排泄: 
+      <select name="toilet">
+        <option>尿</option>
+        <option>便</option>
+        <option>なし</option>
+      </select>
+    </p>
+
+    <p>😊 体調: 
+      <select name="condition">
+        <option>良い</option>
+        <option>普通</option>
+        <option>悪い</option>
+      </select>
+    </p>
+
+    <p>📝 メモ:<br>
+      <textarea name="memo" rows="4" cols="40"></textarea>
+    </p>
+
+    <button type="submit">保存</button>
+  </form>
+</body>
+</html>
