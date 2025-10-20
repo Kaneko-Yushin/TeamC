@@ -1,13 +1,109 @@
-<h2>利用者登録</h2>
-<form method="post">
-  名前: <input type="text" name="name" required><br>
-  年齢: <input type="number" name="age"><br>
-  性別: 
-  <select name="gender">
-    <option>男性</option>
-    <option>女性</option>
-    <option>その他</option>
-  </select><br>
-  備考: <textarea name="notes"></textarea><br>
-  <button type="submit">登録</button>
-</form>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>利用者登録 - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f6f8fa;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .header {
+      background-color: #4C9F70;
+      color: white;
+      text-align: center;
+      padding: 1.5rem 1rem;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+    .form-container {
+      background: white;
+      max-width: 600px;
+      margin: 40px auto;
+      padding: 30px;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .form-label {
+      font-weight: bold;
+      color: #333;
+    }
+    .btn-register {
+      background-color: #4C9F70;
+      color: white;
+      font-weight: bold;
+      width: 100%;
+    }
+    .btn-register:hover {
+      background-color: #3a815c;
+    }
+    .btn-home {
+      color: #4C9F70;
+      text-decoration: none;
+    }
+    .btn-home:hover {
+      text-decoration: underline;
+    }
+    footer {
+      text-align: center;
+      color: #777;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ヘッダー -->
+  <div class="header">
+    <h2>👤 利用者登録</h2>
+    <p>新しい利用者の基本情報を入力してください</p>
+  </div>
+
+  <!-- 登録フォーム -->
+  <div class="form-container">
+    <form method="post">
+      <div class="mb-3">
+        <label class="form-label">名前 <span class="text-danger">*</span></label>
+        <input type="text" name="name" class="form-control" placeholder="例：山田 太郎" required>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">年齢</label>
+        <input type="number" name="age" class="form-control" placeholder="例：82">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">性別</label>
+        <select name="gender" class="form-select">
+          <option selected disabled>選択してください</option>
+          <option>男性</option>
+          <option>女性</option>
+          <option>その他</option>
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">部屋番号</label>
+        <input type="text" name="room_number" class="form-control" placeholder="例：203号室">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">備考</label>
+        <textarea name="notes" class="form-control" rows="3" placeholder="食事形態・アレルギー・注意事項など"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-register btn-lg mt-3">登録する</button>
+    </form>
+
+    <div class="text-center mt-4">
+      <a href="/" class="btn-home">← ホームに戻る</a>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 デジタル介護プロジェクト</p>
+  </footer>
+
+</body>
+</html>

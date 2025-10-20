@@ -41,13 +41,14 @@ def home():
 
 # --- 利用者一覧 ---
 @app.route("/users")
-def users():
+def users_page():
     conn = sqlite3.connect("care.db")
     c = conn.cursor()
     c.execute("SELECT * FROM users")
-    rows = c.fetchall()
+    users = c.fetchall()  # ← ここを rows ではなく users に
     conn.close()
-    return render_template("users.html", rows=rows)
+    return render_template("users.html", users=users)
+
 
 # --- 利用者登録 ---
 @app.route("/add_user", methods=["GET", "POST"])
