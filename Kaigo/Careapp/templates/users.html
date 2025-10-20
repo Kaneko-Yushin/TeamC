@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>利用者一覧</title>
+</head>
+<body>
+  <h2>利用者一覧</h2>
+  <ul>
+    {% for user in users %}
+      <li>{{ user[1] }}（年齢: {{ user[2] }}、性別: {{ user[3] }}）</li>
+    {% endfor %}
+  </ul>
+
+  <a href="/">ホームに戻る</a>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>デジタル介護記録ホーム</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+        }
+        .navbar {
+            background-color: #4C9F70;
+        }
+        .navbar-brand {
+            color: white;
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+        .menu-card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .menu-card:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .icon {
+            font-size: 3rem;
+            color: #4C9F70;
+        }
+        footer {
+            text-align: center;
+            color: #888;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ナビバー -->
+    <nav class="navbar navbar-expand-lg navbar-dark px-4">
+        <span class="navbar-brand">デジタル介護日誌</span>
+        <div class="ms-auto text-white">
+            田中（スタッフ） | <a href="#" class="text-white text-decoration-none">ログアウト</a>
+        </div>
+    </nav>
+
+    <!-- メイン -->
+    <div class="container text-center mt-5">
+        <h2 class="mb-4">メインメニュー</h2>
+        <div class="row g-4 justify-content-center">
+            <!-- 利用者一覧 -->
+            <div class="col-md-3">
+                <a href="/users" class="text-decoration-none text-dark">
+                    <div class="menu-card p-4 bg-white">
+                        <div class="icon mb-2">👥</div>
+                        <h5>利用者一覧</h5>
+                    </div>
+                </a>
+            </div>
+            <!-- 記録入力 -->
+            <div class="col-md-3">
+                <a href="/add_record" class="text-decoration-none text-dark">
+                    <div class="menu-card p-4 bg-white">
+                        <div class="icon mb-2">📝</div>
+                        <h5>記録入力</h5>
+                    </div>
+                </a>
+            </div>
+            <!-- 記録一覧 -->
+            <div class="col-md-3">
+                <a href="/records" class="text-decoration-none text-dark">
+                    <div class="menu-card p-4 bg-white">
+                        <div class="icon mb-2">📖</div>
+                        <h5>記録一覧</h5>
+                    </div>
+                </a>
+            </div>
+            <!-- 利用者登録 -->
+            <div class="col-md-3">
+                <a href="/add_user" class="text-decoration-none text-dark">
+                    <div class="menu-card p-4 bg-white">
+                        <div class="icon mb-2">➕</div>
+                        <h5>利用者登録</h5>
+                    </div>
+                </a>
+            </div>
+            <!-- 設定 -->
+            <div class="col-md-3">
+                <a href="#" class="text-decoration-none text-dark">
+                    <div class="menu-card p-4 bg-white">
+                        <div class="icon mb-2">⚙️</div>
+                        <h5>設定</h5>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-5">
+        <p>© 2025 デジタル介護プロジェクト</p>
+    </footer>
+
+</body>
+</html>
