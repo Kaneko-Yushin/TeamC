@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記録入力 - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f7fa;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .header {
+      background-color: #4C9F70;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+    .card {
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    .section-title {
+      font-weight: bold;
+      color: #4C9F70;
+      margin-bottom: 0.5rem;
+    }
+    .radio-group label {
+      margin-right: 15px;
+    }
+    .illustration {
+      width: 120px;
+      height: auto;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+ 
+  <!-- ヘッダー -->
+  <div class="header">
+    <h2>🩺 記録入力フォーム</h2>
+    <p>利用者の今日の様子をかんたん入力！</p>
+  </div>
+ 
+  <!-- メイン -->
+  <div class="container mt-4 mb-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card p-4 bg-white">
+          <form method="POST" action="/add_record">
+           
+            <!-- 利用者選択 -->
+            <div class="mb-3">
+              <label for="user_id" class="form-label section-title">👤 利用者を選択</label>
+              <select name="user_id" id="user_id" class="form-select" required>
+                <option value="">-- 選択してください --</option>
+                {% for user in users %}
+                  <option value="{{ user[0] }}">{{ user[1] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+ 
+            <div class="text-center mb-4">
+              <img src="https://cdn-icons-png.flaticon.com/512/4149/4149670.png" class="illustration" alt="食事アイコン">
+            </div>
+ 
+            <!-- 食事 -->
+            <div class="mb-3">
+              <label class="form-label section-title">🍽 食事の様子</label>
+              <div class="radio-group">
+                <input type="radio" name="meal" value="完食" id="meal1" required> <label for="meal1">完食</label>
+                <input type="radio" name="meal" value="半分" id="meal2"> <label for="meal2">半分</label>
+                <input type="radio" name="meal" value="少量" id="meal3"> <label for="meal3">少量</label>
+                <input type="radio" name="meal" value="拒否" id="meal4"> <label for="meal4">拒否</label>
+              </div>
+            </div>
+ 
+            <!-- 服薬 -->
+            <div class="mb-3">
+              <label class="form-label section-title">💊 服薬</label>
+              <div class="radio-group">
+                <input type="radio" name="medication" value="服薬済み" id="med1" required> <label for="med1">服薬済み</label>
+                <input type="radio" name="medication" value="忘れ" id="med2"> <label for="med2">忘れ</label>
+                <input type="radio" name="medication" value="拒否" id="med3"> <label for="med3">拒否</label>
+              </div>
+            </div>
+ 
+            <!-- トイレ -->
+            <div class="mb-3">
+              <label class="form-label section-title">🚻 トイレ</label>
+              <div class="radio-group">
+                <input type="radio" name="toilet" value="自立" id="toilet1" required> <label for="toilet1">自立</label>
+                <input type="radio" name="toilet" value="介助" id="toilet2"> <label for="toilet2">介助</label>
+                <input type="radio" name="toilet" value="失敗" id="toilet3"> <label for="toilet3">失敗</label>
+              </div>
+            </div>
+ 
+            <!-- 体調 -->
+            <div class="mb-3">
+              <label class="form-label section-title">🩹 体調</label>
+              <div class="radio-group">
+                <input type="radio" name="condition" value="良好" id="cond1" required> <label for="cond1">良好</label>
+                <input type="radio" name="condition" value="普通" id="cond2"> <label for="cond2">普通</label>
+                <input type="radio" name="condition" value="不調" id="cond3"> <label for="cond3">不調</label>
+              </div>
+            </div>
+ 
+            <!-- メモ -->
+            <div class="mb-3">
+              <label for="memo" class="form-label section-title">📝 メモ</label>
+              <textarea name="memo" id="memo" class="form-control" rows="3" placeholder="例：昼食後に少し眠そうでした"></textarea>
+            </div>
+ 
+            <div class="text-center mt-4">
+              <button type="submit" class="btn btn-success btn-lg px-5">💾 記録を保存</button>
+            </div>
+          </form>
+ 
+          <div class="text-center mt-4">
+            <a href="/" class="text-secondary">🏠 ホームに戻る</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <footer>
+    <p>© 2025 デジタル介護プロジェクト</p>
+  </footer>
+ 
+</body>
+</html>
