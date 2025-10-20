@@ -2,31 +2,124 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>記録一覧</title>
+  <title>記録一覧 - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f7fa;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .header {
+      background-color: #4C9F70;
+      color: white;
+      text-align: center;
+      padding: 1rem;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+    .header h2 {
+      margin-bottom: 0.3rem;
+    }
+    .table-container {
+      background: white;
+      border-radius: 1rem;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    th {
+      background-color: #4C9F70 !important;
+      color: white;
+      text-align: center;
+      vertical-align: middle;
+    }
+    td {
+      vertical-align: middle;
+      text-align: center;
+    }
+    .btn-home {
+      background-color: #4C9F70;
+      color: white;
+      font-weight: bold;
+    }
+    .btn-home:hover {
+      background-color: #3c825c;
+      color: white;
+    }
+    .memo-cell {
+      text-align: left;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #777;
+    }
+  </style>
 </head>
 <body>
-  <h2>記録一覧</h2>
-  <table border="1" cellpadding="5">
-    <tr>
-      <th>ID</th>
-      <th>食事</th>
-      <th>服薬</th>
-      <th>排泄</th>
-      <th>体調</th>
-      <th>メモ</th>
-    </tr>
-    {% for row in rows %}
-    <tr>
-      <td>{{ row[0] }}</td>
-      <td>{{ row[1] }}</td>
-      <td>{{ row[2] }}</td>
-      <td>{{ row[3] }}</td>
-      <td>{{ row[4] }}</td>
-      <td>{{ row[5] }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-
-  <p><a href="/">← 記録入力へ戻る</a></p>
+ 
+  <!-- ヘッダー -->
+  <div class="header">
+    <h2>📖 記録一覧</h2>
+    <p>利用者の記録を日ごとに確認できます</p>
+  </div>
+ 
+  <!-- コンテンツ -->
+  <div class="container mt-4 mb-5">
+    <div class="table-container">
+      <table class="table table-striped table-hover align-middle">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>利用者名</th>
+            <th>食事</th>
+            <th>服薬</th>
+            <th>排泄</th>
+            <th>体調</th>
+            <th>メモ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>
+              {% if row[2] == '完食' %}
+                <span class="badge bg-success">{{ row[2] }}</span>
+              {% elif row[2] == '半分' %}
+                <span class="badge bg-warning text-dark">{{ row[2] }}</span>
+              {% else %}
+                <span class="badge bg-danger">{{ row[2] }}</span>
+              {% endif %}
+            </td>
+            <td>{{ row[3] }}</td>
+            <td>{{ row[4] }}</td>
+            <td>
+              {% if row[5] == '良好' %}
+                <span class="badge bg-success">{{ row[5] }}</span>
+              {% elif row[5] == '普通' %}
+                <span class="badge bg-secondary">{{ row[5] }}</span>
+              {% else %}
+                <span class="badge bg-danger">{{ row[5] }}</span>
+              {% endif %}
+            </td>
+            <td class="memo-cell">{{ row[6] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+ 
+      <div class="text-center mt-4">
+        <a href="/" class="btn btn-home btn-lg px-5">🏠 ホームに戻る</a>
+      </div>
+    </div>
+  </div>
+ 
+  <footer>
+    <p>© 2025 デジタル介護プロジェクト</p>
+  </footer>
+ 
 </body>
 </html>
+ 
+ 
