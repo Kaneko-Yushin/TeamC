@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>管理ページ - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f8f6;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .header {
+      background-color: #4C9F70;
+      color: white;
+      text-align: center;
+      padding: 1.5rem;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+    .card {
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+    }
+    .btn-custom {
+      background-color: #4C9F70;
+      color: white;
+    }
+    .btn-custom:hover {
+      background-color: #3a815c;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>🔧 管理ページ</h2>
+    <p>ログイン中：<strong>{{ staff_name }}</strong></p>
+  </div>
+
+  <div class="container mt-4">
+    <div class="row g-4">
+
+      <div class="col-md-4">
+        <div class="card text-center p-3">
+          <h5>👥 利用者管理</h5>
+          <p>利用者の登録・一覧・削除</p>
+          <a href="/users" class="btn btn-custom">開く</a>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card text-center p-3">
+          <h5>📝 記録管理</h5>
+          <p>全利用者の記録を閲覧</p>
+          <a href="/records" class="btn btn-custom">開く</a>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="card text-center p-3">
+          <h5>👩‍💼 スタッフ管理</h5>
+          <p>スタッフ登録・QRログイン発行</p>
+          <a href="/staff_list" class="btn btn-custom">開く</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="text-center mt-4">
+      <a href="/" class="btn btn-outline-secondary">← ホームに戻る</a>
+      <a href="/logout" class="btn btn-danger ms-2">ログアウト</a>
+    </div>
+  </div>
+
+  <footer class="text-center mt-5 text-muted">
+    <p>© 2025 デジタル介護プロジェクト</p>
+  </footer>
+</body>
+</html>

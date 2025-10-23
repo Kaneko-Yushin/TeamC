@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>職員アカウント変更</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4" style="max-width:700px">
+  <h3 class="mb-3">✏️ 職員アカウント変更</h3>
+
+  {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
+
+  <form method="post">
+    <div class="mb-3">
+      <label class="form-label">氏名</label>
+      <input name="name" class="form-control" required value="{{ staff['name'] }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Email</label>
+      <input name="email" type="email" class="form-control" value="{{ staff['email'] or '' }}">
+    </div>
+    <div class="mb-3">
+      <label class="form-label">権限</label>
+      <select name="role" class="form-select">
+        <option value="caregiver" {% if (staff['role'] or '')=='caregiver' %}selected{% endif %}>介護士</option>
+        <option value="nurse"     {% if (staff['role'] or '')=='nurse' %}selected{% endif %}>看護師</option>
+        <option value="admin"     {% if (staff['role'] or '')=='admin' %}selected{% endif %}>管理者</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">パスワード（入力時のみ更新）</label>
+      <input name="password" type="text" class="form-control" placeholder="変更しない場合は空のまま">
+    </div>
+
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary">保存</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('accounts') }}">戻る</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>

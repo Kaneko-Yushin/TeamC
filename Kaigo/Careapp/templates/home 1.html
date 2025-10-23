@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ホーム - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background:#f3f7f5; font-family:"Hiragino Kaku Gothic ProN","Meiryo",sans-serif; }
+    .hero { background:#4C9F70; color:#fff; padding:18px 0; }
+    .hero .who { font-weight:600; }
+    .menu-title { text-align:center; margin:28px 0 22px; font-weight:800; letter-spacing:.1em; color:#233; }
+    .tiles { 
+      display:grid; 
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
+      gap:24px; 
+      max-width:1100px; 
+      margin:0 auto 8px;
+    }
+    .tile {
+      background:#fff; border:none; border-radius:18px;
+      box-shadow:0 6px 22px rgba(0,0,0,.08);
+      padding:28px 22px; text-align:center; transition:transform .15s ease, box-shadow .15s ease;
+    }
+    .tile:hover { transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,.12); }
+    .tile h4 { margin:10px 0 6px; font-weight:800; color:#184f3a; }
+    .tile p { margin:0; color:#6a7; font-size:.95rem; }
+    .emoji { font-size:44px; display:block; }
+    /* 下段（設定＋引継ぎ）を横並びにする */
+    .bottom-row {
+      display:flex; gap:24px; justify-content:center; align-items:stretch; 
+      flex-wrap:wrap; max-width:1100px; margin:10px auto 40px;
+    }
+    .tile.disabled { opacity:.45; pointer-events:none; }
+    .logout { text-align:center; margin:8px 0 26px; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <div class="container d-flex justify-content-between align-items-center">
+      <h1 class="h4 m-0">🌿 デジタル介護日誌</h1>
+      {% if staff_name %}
+        <div class="who">ログイン中：{{ staff_name }}（{{ staff_role or "スタッフ" }}）</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <h2 class="menu-title">メインメニュー</h2>
+
+  {% if staff_name %}
+    <!-- 上段：3～4枚のカード（レスポンシブで自動折り返し） -->
+    <div class="tiles container">
+      <a class="tile text-decoration-none" href="/users">
+        <span class="emoji">👥</span>
+        <h4>利用者一覧</h4>
+        <p>登録されている利用者を確認</p>
+      </a>
+
+      <a class="tile text-decoration-none" href="/add_record">
+        <span class="emoji">📝</span>
+        <h4>記録入力</h4>
+        <p>食事・服薬・排泄・体調など</p>
+      </a>
+
+      <a class="tile text-decoration-none" href="/records">
+        <span class="emoji">📖</span>
+        <h4>記録一覧</h4>
+        <p>これまでの記録を閲覧</p>
+      </a>
+
+      <!-- 管理者のみ有効。それ以外は薄く表示 -->
+      {% if staff_role == "管理者" %}
+        <a class="tile text-decoration-none" href="/add_user">
+          <span class="emoji">➕</span>
+          <h4>利用者登録</h4>
+          <p>管理者のみ</p>
+        </a>
+      {% else %}
+        <div class="tile disabled">
+          <span class="emoji">➕</span>
+          <h4>利用者登録</h4>
+          <p>管理者のみ</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 下段：ここを横並びに固定（設定＋引継ぎ） -->
+    <div class="bottom-row container">
+      <a class="tile text-decoration-none" href="/admin" style="min-width:240px;">
+        <span class="emoji">⚙️</span>
+        <h4>設定</h4>
+        <p>スタッフ・QR発行など</p>
+      </a>
+
+      <a class="tile text-decoration-none" href="/handover" style="min-width:240px;">
+        <span class="emoji">🗂️</span>
+        <h4>引継ぎボード</h4>
+        <p>当日の申し送り・シフト別</p>
+      </a>
+    </div>
+
+    <div class="logout">
+      <a href="/logout" class="btn btn-outline-danger px-4">ログアウト</a>
+    </div>
+
+  {% else %}
+    <div class="container" style="max-width:720px;">
+      <div class="tile">
+        <h4 class="mb-3">ログインしてください</h4>
+        <div class="d-flex justify-content-center gap-2 flex-wrap">
+          <a href="/staff_login" class="btn btn-success px-4">🔑 スタッフログイン</a>
+          <a href="/staff_register" class="btn btn-outline-success px-4">＋ 新規スタッフ登録</a>
+          <a href="/admin" class="btn btn-outline-secondary px-4">管理ページへ</a>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <footer class="text-center text-muted pb-4">
+    <small>© 2025 デジタル介護プロジェクト</small>
+  </footer>
+</body>
+</html>

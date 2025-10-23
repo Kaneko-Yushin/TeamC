@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>スタッフ一覧 - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f5f8f6;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .header {
+      background-color: #4C9F70;
+      color: white;
+      text-align: center;
+      padding: 1.5rem;
+      border-bottom-left-radius: 1rem;
+      border-bottom-right-radius: 1rem;
+    }
+    table {
+      background: white;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+    }
+    th {
+      background-color: #e9f5ee;
+      color: #4C9F70;
+    }
+    .btn-custom {
+      background-color: #4C9F70;
+      color: white;
+    }
+    .btn-custom:hover {
+      background-color: #3a815c;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>👩‍💼 スタッフ一覧</h2>
+    <p>登録済みスタッフの確認と管理</p>
+  </div>
+
+  <div class="container mt-4">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>名前</th>
+          <th>役職</th>
+          <th>QRログイン</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for staff in staff_list %}
+        <tr>
+          <td>{{ staff[0] }}</td>
+          <td>{{ staff[1] }}</td>
+          <td>{{ staff[3] or "スタッフ" }}</td>
+          <td>
+            {% if staff[4] %}
+              <a href="/login/{{ staff[4] }}" target="_blank">🔗 QRリンク</a>
+            {% else %}
+              <span class="text-muted">未発行</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="/qr/{{ staff[1] }}" class="btn btn-sm btn-custom">QR再発行</a>
+            <a href="/delete_staff/{{ staff[0] }}" class="btn btn-sm btn-danger"
+               onclick="return confirm('本当に削除しますか？');">削除</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="text-center mt-4">
+      <a href="/staff_register" class="btn btn-success">＋ 新規スタッフ登録</a>
+      <a href="/admin" class="btn btn-outline-secondary ms-2">← 管理ページに戻る</a>
+    </div>
+  </div>
+
+  <footer class="text-center mt-5 text-muted">
+    <p>© 2025 デジタル介護プロジェクト</p>
+  </footer>
+</body>
+</html>
+
