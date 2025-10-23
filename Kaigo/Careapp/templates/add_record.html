@@ -1,25 +1,49 @@
-<!-- add_record.html -->
-<!DOCTYPE html><html lang="ja"><head>
-<meta charset="UTF-8"><title>記録追加</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head><body class="bg-light"><div class="container py-4" style="max-width:720px">
-<h3 class="mb-3">📝 記録追加</h3>
-<form method="post">
-  <div class="mb-2">
-    <label class="form-label">利用者</label>
-    <select name="user_id" class="form-select" required>
-      <option value="">選択してください</option>
-      {% for u in users %}
-        <option value="{{ u[0] }}" {% if selected_user_id and (selected_user_id|int)==u[0] %}selected{% endif %}>{{ u[1] }}</option>
-      {% endfor %}
-    </select>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>記録追加</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4" style="max-width:900px">
+    <h2 class="mb-3">📝 記録追加</h2>
+    <form method="post" class="card p-4 shadow-sm">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">利用者</label>
+          <select name="user_id" class="form-select" required>
+            {% for u in users %}
+              <option value="{{ u[0] }}">{{ u[1] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">食事</label>
+          <input name="meal" class="form-control" placeholder="完食/半分 など">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">服薬</label>
+          <input name="medication" class="form-control" placeholder="内服済/未 など">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">排泄</label>
+          <input name="toilet" class="form-control">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">体調</label>
+          <input name="condition" class="form-control">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">メモ</label>
+          <textarea name="memo" rows="3" class="form-control"></textarea>
+        </div>
+      </div>
+      <div class="mt-3 d-flex gap-2">
+        <button class="btn btn-primary">保存</button>
+        <a href="{{ url_for('records') }}" class="btn btn-outline-secondary">戻る</a>
+      </div>
+    </form>
   </div>
-  <div class="mb-2"><label class="form-label">食事</label><input name="meal" class="form-control"></div>
-  <div class="mb-2"><label class="form-label">投薬</label><input name="medication" class="form-control"></div>
-  <div class="mb-2"><label class="form-label">トイレ</label><input name="toilet" class="form-control"></div>
-  <div class="mb-2"><label class="form-label">体調</label><input name="condition" class="form-control"></div>
-  <div class="mb-2"><label class="form-label">メモ</label><textarea name="memo" class="form-control"></textarea></div>
-  <button class="btn btn-primary">保存</button>
-  <a class="btn btn-outline-secondary" href="{{ url_for('records') }}">戻る</a>
-</form>
-</div></body></html>
+</body>
+</html>
