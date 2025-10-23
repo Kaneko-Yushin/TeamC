@@ -6,7 +6,7 @@ from functools import wraps
 from datetime import date
 import sqlite3
 import io
-    # noqa
+# noqa
 import csv
 import secrets
 import os
