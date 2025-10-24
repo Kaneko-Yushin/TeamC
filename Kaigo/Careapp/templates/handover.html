@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>引継ぎボード</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <div class="container py-4">
+    <h2 class="mb-3">🗂️ 引継ぎボード</h2>
+
+    <form class="row g-2 mb-3" method="get">
+      <div class="col-auto">
+        <input type="date" name="date" class="form-control" value="{{ on_date }}">
+      </div>
+      <div class="col-auto">
+        <select name="shift" class="form-select">
+          <option value="">全シフト</option>
+          <option value="日勤" {% if shift=='日勤' %}selected{% endif %}>日勤</option>
+          <option value="遅番" {% if shift=='遅番' %}selected{% endif %}>遅番</option>
+          <option value="夜勤" {% if shift=='夜勤' %}selected{% endif %}>夜勤</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-primary">絞り込み</button>
+      </div>
+      <div class="col-auto">
+        <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームへ</a>
+      </div>
+    </form>
+
+    <div class="card p-3 mb-4">
+      <form method="post" class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">日付</label>
+          <input type="date" name="on_date" class="form-control" value="{{ on_date }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">シフト</label>
+          <select name="shift" class="form-select">
+            <option>日勤</option><option>遅番</option><option>夜勤</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">対象</label>
+          <input name="resident" class="form-control" placeholder="○○様 / 全体など">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">優先度</label>
+          <select name="priority" class="form-select">
+            <option>高</option><option selected>中</option><option>低</option>
+          </select>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">内容</label>
+          <textarea name="content" rows="2" class="form-control"></textarea>
+        </div>
+        <div class="col-md-12">
+          <button class="btn btn-success">追加</button>
+        </div>
+      </form>
+    </div>
+
+    <table class="table table-hover bg-white">
+      <thead>
+        <tr>
+          <th>ID</th><th>日付</th><th>シフト</th><th>対象</th><th>優先</th><th>内容</th><th>記入者</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in items %}
+        <tr>
+          <td>{{ i[0] }}</td>
+          <td>{{ i[1] }}</td>
+          <td>{{ i[2] }}</td>
+          <td>{{ i[3] }}</td>
+          <td>{{ i[4] }}</td>
+          <td class="text-break">{{ i[5] }}</td>
+          <td>{{ i[6] }}</td>
+          <td>
+            <form method="post" action="{{ url_for('handover_delete', item_id=i[0]) }}"
+                  onsubmit="return confirm('削除します。よろしいですか？');">
+              <button class="btn btn-sm btn-outline-danger">削除</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted">データがありません</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
