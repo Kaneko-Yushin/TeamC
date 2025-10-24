@@ -7,9 +7,17 @@
 </head>
 <body class="bg-light">
   <div class="container mt-5" style="max-width:520px">
+<<<<<<< HEAD
+    {% with msgs = get_flashed_messages() %}
+      {% if msgs %}{% for m in msgs %}<div class="alert alert-info">{{ m }}</div>{% endfor %}{% endif %}
+    {% endwith %}
+    <h2 class="text-center mb-4">🔑 スタッフログイン</h2>
+    <form method="post" class="card p-4 shadow">
+=======
     <h2 class="text-center mb-4">🔑 スタッフログイン</h2>
 
     <form method="post" class="card p-4 shadow-sm">
+>>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
       <div class="mb-3">
         <label class="form-label">名前</label>
         <input type="text" name="name" class="form-control" required>
@@ -20,7 +28,10 @@
       </div>
       <button type="submit" class="btn btn-primary w-100">ログイン</button>
     </form>
+<<<<<<< HEAD
+=======
 
+>>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
     <div class="text-center mt-3">
       <a href="{{ url_for('staff_register') }}">新規登録はこちら</a>
     </div>

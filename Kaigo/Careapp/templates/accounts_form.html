@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>職員アカウント{{ '編集' if mode=='edit' else '追加' }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light p-3">
+<div class="container" style="max-width:720px">
+  <h3 class="mb-3">👤 職員アカウント {{ '編集' if mode=='edit' else '追加' }}</h3>
+
+  <form class="card p-4 shadow-sm" method="post">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">氏名</label>
+        <input name="name" class="form-control" required value="{{ staff_row[1] if staff_row else '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input name="email" type="email" class="form-control" value="{{ staff_row[2] if staff_row else '' }}">
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">権限</label>
+        <select name="role" class="form-select">
+          {% set rv = (staff_row[3] if staff_row else 'caregiver') %}
+          <option value="admin"  {{ 'selected' if rv=='admin' else '' }}>管理者</option>
+          <option value="nurse"  {{ 'selected' if rv=='nurse' else '' }}>看護師</option>
+          <option value="caregiver" {{ 'selected' if rv=='caregiver' else '' }}>介護士</option>
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">パスワード {{ '(変更時のみ)' if mode=='edit' else '' }}</label>
+        <input name="password" type="password" class="form-control" {{ '' if mode=='edit' else 'required' }}>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <button class="btn btn-primary">{{ '更新' if mode=='edit' else '登録' }}</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('accounts') }}">戻る</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>
