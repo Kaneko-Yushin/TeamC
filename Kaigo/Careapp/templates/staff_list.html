@@ -5,10 +5,20 @@
   <title>{{ _('スタッフ一覧 - デジタル介護日誌') }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
   <style>
-    body { background:#f5f8f6; }
-    .header { background:#4C9F70; color:#fff; text-align:center; padding:1.3rem; }
-    table { background:#fff; border-radius:1rem; overflow:hidden; box-shadow:0 3px 8px rgba(0,0,0,.1); }
-    th { background:#e9f5ee; color:#4C9F70; }
+    body { background: #f5f8f6; }
+    .header {
+      background: #4C9F70;
+      color: #fff;
+      text-align: center;
+      padding: 1.3rem;
+    }
+    table {
+      background: #fff;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, .1);
+    }
+    th { background: #e9f5ee; color: #4C9F70; }
   </style>
 </head>
 <body>
@@ -46,16 +56,23 @@
           </td>
           <td>
             {% if s[4] %}
-              <a href="{{ url_for('login_by_qr', token=s[4]) }}" target="_blank">🔗 {{ _('QRリンク') }}</a>
+              <a href="{{ url_for('login_by_qr', token=s[4]) }}" target="_blank">
+                🔗 {{ _('QRリンク') }}
+              </a>
             {% else %}
               <span class="text-muted">{{ _('未発行') }}</span>
             {% endif %}
           </td>
           <td>
-            <a href="{{ url_for('qr_reissue', name=s[1]) }}" class="btn btn-sm btn-success">{{ _('QR再発行') }}</a>
+            <a href="{{ url_for('qr_reissue', name=s[1]) }}"
+               class="btn btn-sm btn-success">
+              {{ _('QR再発行') }}
+            </a>
             <a href="{{ url_for('delete_staff', sid=s[0]) }}"
                class="btn btn-sm btn-danger"
-               onclick="return confirm('{{ _('本当に削除しますか？') }}');">{{ _('削除') }}</a>
+               onclick="return confirm({{ _('本当に削除しますか？') | tojson }});">
+              {{ _('削除') }}
+            </a>
           </td>
         </tr>
         {% endfor %}
@@ -63,10 +80,13 @@
     </table>
 
     <div class="text-center mt-3">
-      <a href="{{ url_for('generate_qr') }}" class="btn btn-primary">{{ _('＋ QR発行（新規）') }}</a>
-      <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('← 管理ページに戻る') }}</a>
+      <a href="{{ url_for('generate_qr') }}" class="btn btn-primary">
+        {{ _('＋ QR発行（新規）') }}
+      </a>
+      <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary ms-2">
+        {{ _('← 管理ページに戻る') }}
+      </a>
     </div>
   </div>
 </body>
 </html>
-

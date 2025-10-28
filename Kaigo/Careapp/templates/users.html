@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <title>{{ _('利用者一覧') }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>.cardx{border:none;border-radius:14px;box-shadow:0 3px 10px rgba(0,0,0,.08);}</style>
+  <style>
+    .cardx {
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, .08);
+    }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container py-4">
@@ -26,9 +32,11 @@
           <div class="small text-muted">{{ _('部屋番号') }}: {{ u[4] or '-' }}</div>
           <div class="small text-muted">{{ _('備考') }}: {{ u[5] or '-' }}</div>
           <div class="mt-2">
-            <a class="btn btn-sm btn-outline-danger"
-               href="{{ url_for('delete_user', user_id=u[0]) }}"
-               onclick="return confirm('{{ _('本当に削除しますか？') }}')">{{ _('削除') }}</a>
+            <a href="{{ url_for('delete_user', user_id=u[0]) }}"
+               class="btn btn-sm btn-outline-danger"
+               onclick="return confirm({{ _('本当に削除しますか？') | tojson }});">
+              {{ _('削除') }}
+            </a>
           </div>
         </div>
       </div>
@@ -36,8 +44,12 @@
     </div>
 
     <div class="text-center mt-4">
-      <a href="{{ url_for('add_user') }}" class="btn btn-success">{{ _('＋ 新しい利用者を登録') }}</a>
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">{{ _('← ホームに戻る') }}</a>
+      <a href="{{ url_for('add_user') }}" class="btn btn-success">
+        {{ _('＋ 新しい利用者を登録') }}
+      </a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">
+        {{ _('← ホームに戻る') }}
+      </a>
     </div>
   </div>
 </body>
