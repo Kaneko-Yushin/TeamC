@@ -180,7 +180,7 @@ def staff_login():
         if staff:
             session["staff_name"] = staff[0]
             session["staff_role"] = staff[1]
-            flash(_("%(name)s さんでログインしました。", name=staff[0]))
+            flash(_("%(name)s さんでログインしました。") % {"name": staff[0]})
             return redirect(url_for("home"))
         else:
             flash(_("名前またはパスワードが間違っています。"))
@@ -359,7 +359,7 @@ def login_by_qr(token):
     if staff:
         session["staff_name"] = staff[0]
         session["staff_role"] = staff[1]
-        flash(_("%(name)s さんでログインしました。", name=staff[0]))
+        flash(_("%(name)s さんでログインしました。") % {"name": staff[0]})
         return redirect(url_for("home"))
     return _("無効なQRコードです。"), 403
 
