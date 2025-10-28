@@ -9,11 +9,13 @@
 <body class="bg-light">
   <div class="container py-4">
     <h2 class="mb-3">{{ _('👥 利用者一覧') }}</h2>
+
     {% with msgs = get_flashed_messages() %}
       {% if msgs %}
         <div class="alert alert-info">{{ msgs[-1] }}</div>
       {% endif %}
     {% endwith %}
+
     <div class="row g-3">
       {% for u in users %}
       <div class="col-md-6">
@@ -32,6 +34,7 @@
       </div>
       {% endfor %}
     </div>
+
     <div class="text-center mt-4">
       <a href="{{ url_for('add_user') }}" class="btn btn-success">{{ _('＋ 新しい利用者を登録') }}</a>
       <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">{{ _('← ホームに戻る') }}</a>
@@ -39,6 +42,3 @@
   </div>
 </body>
 </html>
-
-
-
