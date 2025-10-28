@@ -1,119 +1,55 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="{{ CURRENT_LANG }}">
 <head>
-  <meta charset="UTF-8" />
-  <title>ホーム - デジタル介護日誌</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="UTF-8">
+  <title>{{ _("ホーム - デジタル介護日誌") }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body{background:#f4f7f6;font-family:"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;}
-    .topbar{background:#3e8b62;color:#fff}
-    .brand{font-weight:700}
-    .menu-wrap{max-width:1100px;margin:40px auto}
-    .menu-title{font-size:2rem;font-weight:700;text-align:center;margin-bottom:24px}
-    .card-menu{border:none;border-radius:18px;background:#fff;box-shadow:0 8px 20px rgba(0,0,0,.06);padding:28px;transition:transform .12s ease, box-shadow .12s ease; text-align:center}
-    .card-menu:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(0,0,0,.10)}
-    .menu-icon{font-size:48px;margin-bottom:10px}
-    .menu-head{font-size:1.25rem;font-weight:700;color:#1b65b3;margin-bottom:6px}
-    .menu-desc{color:#6b6f76;font-size:.95rem}
-    .row-gap{row-gap:22px}
-    .logout-btn{border-radius:10px}
+    body {
+      background-color: #f8f9fa;
+      font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+    }
+    .container {
+      margin-top: 80px;
+      text-align: center;
+    }
+    .btn-main {
+      background-color: #4C9F70;
+      color: white;
+      border: none;
+      margin: 10px;
+      padding: 15px 30px;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+    .btn-main:hover {
+      background-color: #3b7d58;
+    }
   </style>
 </head>
 <body>
-  <!-- Top bar -->
-  <nav class="navbar topbar">
-    <div class="container">
-      <span class="navbar-brand text-white brand">デジタル介護日誌</span>
-      <div class="ms-auto d-flex align-items-center gap-3">
-        {% if staff_name %}
-          <span>{{ staff_name }}（
-            {% if staff_role=='admin' %}管理者{% elif staff_role=='caregiver' %}スタッフ{% else %}-{% endif %}
-          ）</span>
-          <a class="btn btn-light btn-sm logout-btn" href="{{ url_for('logout') }}">ログアウト</a>
-        {% else %}
-          <a class="btn btn-outline-light btn-sm" href="{{ url_for('staff_login') }}">ログイン</a>
-        {% endif %}
-      </div>
-    </div>
-  </nav>
+  <div class="container">
+    <h1 class="mb-3">🌿 {{ _("デジタル介護日誌") }}</h1>
 
-  <main class="menu-wrap container">
-    <h2 class="menu-title">メインメニュー</h2>
-
-    <!-- 上段（4枚横並び） -->
-    <div class="row row-gap">
-      <div class="col-12 col-md-6 col-lg-3">
-        <a class="text-decoration-none" href="{{ url_for('users_page') }}">
-          <div class="card-menu h-100">
-            <div class="menu-icon">👥</div>
-            <div class="menu-head">利用者一覧</div>
-            <div class="menu-desc">登録されている利用者を確認</div>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-3">
-        <a class="text-decoration-none" href="{{ url_for('add_record') }}">
-          <div class="card-menu h-100">
-            <div class="menu-icon">📝</div>
-            <div class="menu-head">記録入力</div>
-            <div class="menu-desc">食事・服薬・排泄・体調など</div>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-3">
-        <a class="text-decoration-none" href="{{ url_for('records') }}">
-          <div class="card-menu h-100">
-            <div class="menu-icon">📘</div>
-            <div class="menu-head">記録一覧</div>
-            <div class="menu-desc">これまでの記録を閲覧</div>
-          </div>
-        </a>
-      </div>
-
-      <div class="col-12 col-md-6 col-lg-3">
-        {% if staff_role == 'admin' %}
-          <a class="text-decoration-none" href="{{ url_for('add_user') }}">
-            <div class="card-menu h-100">
-              <div class="menu-icon">➕</div>
-              <div class="menu-head">利用者登録</div>
-              <div class="menu-desc">管理者のみ</div>
-            </div>
-          </a>
-        {% else %}
-          <div class="card-menu h-100" style="opacity:.55;pointer-events:none">
-            <div class="menu-icon">➕</div>
-            <div class="menu-head">利用者登録</div>
-            <div class="menu-desc">（管理者のみ）</div>
-          </div>
-        {% endif %}
-      </div>
+    <!-- 🌍 言語切替 -->
+    <div class="text-end mb-4">
+      {% include "_lang_switcher.html" %}
     </div>
 
-    <!-- 下段（設定 と 引継ぎ を横並び） -->
-    <div class="row row-gap mt-3 justify-content-center">
-      <div class="col-12 col-md-6 col-lg-4">
-        <a class="text-decoration-none" href="{{ url_for('admin_page') }}">
-          <div class="card-menu h-100">
-            <div class="menu-icon">⚙️</div>
-            <div class="menu-head">設定</div>
-            <div class="menu-desc">スタッフ・QR発行など</div>
-          </div>
-        </a>
-      </div>
+    {% if staff_name %}
+      <h4 class="text-success mb-4">{{ _("ログイン中：") }}{{ staff_name }} {{ _("さん") }}</h4>
+      <a href="/users" class="btn btn-main">👥 {{ _("利用者一覧") }}</a>
+      <a href="/add_record" class="btn btn-main">📝 {{ _("記録を追加") }}</a>
+      <a href="/records" class="btn btn-main">📖 {{ _("記録を見る") }}</a>
+      <br><br>
+      <a href="/logout" class="btn btn-outline-danger">{{ _("ログアウト") }}</a>
 
-      <div class="col-12 col-md-6 col-lg-4">
-        <a class="text-decoration-none" href="{{ url_for('handover') }}">
-          <div class="card-menu h-100">
-            <div class="menu-icon">🗂️</div>
-            <div class="menu-head">引継ぎボード</div>
-            <div class="menu-desc">当日の申し送り・シフト別</div>
-          </div>
-        </a>
-      </div>
-    </div>
-  </main>
+    {% else %}
+      <p class="mb-4 text-secondary">{{ _("ログインまたはスタッフ登録を行ってください。") }}</p>
+      <a href="/staff_login" class="btn btn-main">🔑 {{ _("スタッフログイン") }}</a>
+      <a href="/staff_register" class="btn btn-outline-success">＋ {{ _("新規スタッフ登録") }}</a>
+      <a href="/admin" class="btn btn-outline-success">{{ _("管理ページへ") }}</a>
+    {% endif %}
+  </div>
 </body>
 </html>
