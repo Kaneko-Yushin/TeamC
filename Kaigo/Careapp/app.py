@@ -14,124 +14,116 @@ import gettext
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
-
 DB_PATH = "care.db"
 
-# ============= i18n 設定 =============
-# 使用言語の候補
+# ==============================
+# 🔤 i18n 多言語化設定
+# ==============================
 SUPPORTED_LANGS = ["ja", "en"]
 
 def get_locale():
-    # セッションに保存された言語。未設定ならja
+    """セッションから現在の言語を取得"""
     lang = session.get("lang") or "ja"
-    if lang not in SUPPORTED_LANGS:
-        lang = "ja"
-    return lang
+    return lang if lang in SUPPORTED_LANGS else "ja"
 
 def load_translations(lang: str):
-    """
-    translations/<lang>/LC_MESSAGES/messages.(mo|po)
-    があればそれを読み込み。なければダミー(原文表示)。
-    """
+    """指定言語の翻訳ファイルを読み込み"""
     try:
         t = gettext.translation(
             domain="messages",
             localedir="translations",
             languages=[lang]
         )
-        t.install()
         return t.gettext
     except Exception:
-        # .mo が無い場合にも壊れないように
-        return gettext.gettext
+        return gettext.gettext  # moが無くても原文を返す
+
+# ---- Pythonコード内でも使える _() ----
+def _(message: str) -> str:
+    """Python側用の翻訳関数"""
+    return load_translations(get_locale())(message)
 
 @app.before_request
 def _inject_gettext():
-    # ルートハンドラで _() を使えるようにする
-    lang = get_locale()
-    _ = load_translations(lang)
-    # Jinja2 へ公開
+    """Jinja2側にも _ を登録"""
     app.jinja_env.globals["_"] = _
-    # テンプレにも現在言語を渡す
-    app.jinja_env.globals["current_lang"] = lang
+    app.jinja_env.globals["current_lang"] = get_locale()
 
 @app.route("/set_language/<lang>")
 def set_language(lang):
+    """言語切替ルート"""
     if lang not in SUPPORTED_LANGS:
         lang = "ja"
     session["lang"] = lang
-    # 直前ページがあればそこへ戻す
     ref = request.headers.get("Referer")
     return redirect(ref or url_for("home"))
 
-# ============= DB 接続まわり =============
+# ==============================
+# 💾 DB接続設定
+# ==============================
 def get_connection():
     return sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
 
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
-
         # 利用者
         c.execute("""
             CREATE TABLE IF NOT EXISTS users(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT,
-              age INTEGER,
-              gender TEXT,
-              room_number TEXT,
-              notes TEXT
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT,
+                age INTEGER,
+                gender TEXT,
+                room_number TEXT,
+                notes TEXT
             )
         """)
-
         # 記録
         c.execute("""
             CREATE TABLE IF NOT EXISTS records(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              user_id INTEGER,
-              meal TEXT,
-              medication TEXT,
-              toilet TEXT,
-              condition TEXT,
-              memo TEXT,
-              staff_name TEXT,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-              FOREIGN KEY(user_id) REFERENCES users(id)
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                meal TEXT,
+                medication TEXT,
+                toilet TEXT,
+                condition TEXT,
+                memo TEXT,
+                staff_name TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY(user_id) REFERENCES users(id)
             )
         """)
-
         # スタッフ
         c.execute("""
             CREATE TABLE IF NOT EXISTS staff(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              name TEXT UNIQUE,
-              password TEXT,
-              role TEXT,
-              login_token TEXT
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT UNIQUE,
+                password TEXT,
+                role TEXT,
+                login_token TEXT
             )
         """)
-
         # 引継ぎ
         c.execute("""
             CREATE TABLE IF NOT EXISTS handover(
-              id INTEGER PRIMARY KEY AUTOINCREMENT,
-              on_date TEXT,
-              shift TEXT,
-              resident_id INTEGER,
-              priority INTEGER,
-              title TEXT,
-              body TEXT,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                on_date TEXT,
+                shift TEXT,
+                resident_id INTEGER,
+                priority INTEGER,
+                title TEXT,
+                body TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-
         conn.commit()
 
-# 初回作成
 if not os.path.exists(DB_PATH):
     init_db()
 
-# ============= 認証デコレータ =============
+# ==============================
+# 🧩 デコレータ
+# ==============================
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -149,14 +141,18 @@ def admin_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-# ============= ルーティング =============
+# ==============================
+# 🏠 ホーム
+# ==============================
 @app.route("/")
 def home():
     staff_name = session.get("staff_name")
     staff_role = session.get("staff_role")
     return render_template("home.html", staff_name=staff_name, staff_role=staff_role)
 
-# ---- スタッフ登録・ログイン・ログアウト ----
+# ==============================
+# 👩‍⚕️ スタッフ登録・ログイン
+# ==============================
 @app.route("/staff_register", methods=["GET", "POST"])
 def staff_register():
     if request.method == "POST":
@@ -166,10 +162,7 @@ def staff_register():
         with get_connection() as conn:
             c = conn.cursor()
             try:
-                c.execute(
-                    "INSERT INTO staff (name, password, role) VALUES (?, ?, ?)",
-                    (name, password, role)
-                )
+                c.execute("INSERT INTO staff (name, password, role) VALUES (?, ?, ?)", (name, password, role))
                 conn.commit()
                 flash(_("登録が完了しました。ログインしてください。"))
                 return redirect(url_for("staff_login"))
@@ -184,15 +177,11 @@ def staff_login():
         password = request.form.get("password")
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute(
-                "SELECT name, role FROM staff WHERE name=? AND password=?",
-                (name, password)
-            )
+            c.execute("SELECT name, role FROM staff WHERE name=? AND password=?", (name, password))
             staff = c.fetchone()
         if staff:
             session["staff_name"] = staff[0]
             session["staff_role"] = staff[1]
-            # gettext は %-format を使う
             flash(_("%s さんでログインしました。") % staff[0])
             return redirect(url_for("home"))
         else:
@@ -205,7 +194,9 @@ def logout():
     flash(_("ログアウトしました。"))
     return redirect(url_for("home"))
 
-# ---- 利用者一覧・登録・削除 ----
+# ==============================
+# 👥 利用者管理
+# ==============================
 @app.route("/users")
 @admin_required
 def users_page():
@@ -226,10 +217,8 @@ def add_user():
         notes = request.form.get("notes")
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute(
-                "INSERT INTO users (name, age, gender, room_number, notes) VALUES (?, ?, ?, ?, ?)",
-                (name, age, gender, room_number, notes)
-            )
+            c.execute("INSERT INTO users (name, age, gender, room_number, notes) VALUES (?, ?, ?, ?, ?)",
+                      (name, age, gender, room_number, notes))
             conn.commit()
         flash(_("利用者を登録しました。"))
         return redirect(url_for("users_page"))
@@ -245,7 +234,9 @@ def delete_user(user_id):
     flash(_("利用者を削除しました。"))
     return redirect(url_for("users_page"))
 
-# ---- 記録一覧・追加（選択式） ----
+# ==============================
+# 📋 記録管理
+# ==============================
 @app.route("/records")
 @login_required
 def records():
@@ -254,9 +245,8 @@ def records():
         c.execute("""
             SELECT r.id, u.name, r.meal, r.medication, r.toilet, r.condition,
                    r.memo, r.staff_name, r.created_at
-              FROM records r
-              JOIN users u ON r.user_id = u.id
-             ORDER BY r.id DESC
+            FROM records r JOIN users u ON r.user_id = u.id
+            ORDER BY r.id DESC
         """)
         rows = c.fetchall()
     return render_template("records.html", rows=rows)
@@ -307,7 +297,9 @@ def add_record():
         CONDITION_CHOICES=CONDITION_CHOICES
     )
 
-# ---- 引継ぎボード ----
+# ==============================
+# 🔄 引継ぎボード
+# ==============================
 @app.route("/handover", methods=["GET", "POST"])
 @login_required
 def handover():
@@ -319,16 +311,12 @@ def handover():
         residents = c.fetchall()
         c.execute("""
             SELECT h.id, h.on_date, h.shift, u.name, h.priority, h.title, h.body, h.created_at
-              FROM handover h
-         LEFT JOIN users u ON h.resident_id = u.id
-             WHERE h.on_date = ? AND h.shift = ?
-          ORDER BY h.priority ASC, h.id DESC
+            FROM handover h LEFT JOIN users u ON h.resident_id = u.id
+            WHERE h.on_date = ? AND h.shift = ?
+            ORDER BY h.priority ASC, h.id DESC
         """, (on_date, shift))
         items = c.fetchall()
-    return render_template(
-        "handover.html",
-        items=items, residents=residents, on_date=on_date, shift=shift
-    )
+    return render_template("handover.html", items=items, residents=residents, on_date=on_date, shift=shift)
 
 @app.route("/handover/add", methods=["POST"])
 @login_required
@@ -341,15 +329,17 @@ def handover_add():
     body = request.form.get("body")
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute(
-            "INSERT INTO handover(on_date, shift, resident_id, priority, title, body) VALUES (?, ?, ?, ?, ?, ?)",
-            (on_date, shift, resident_id, priority, title, body)
-        )
+        c.execute("""
+            INSERT INTO handover(on_date, shift, resident_id, priority, title, body)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (on_date, shift, resident_id, priority, title, body))
         conn.commit()
     flash(_("引継ぎを追加しました。"))
     return redirect(url_for("handover", date=on_date, shift=shift))
 
-# ---- 管理者ページ／スタッフ一覧・QR ----
+# ==============================
+# ⚙️ 管理者ページ・スタッフ管理
+# ==============================
 @app.route("/admin")
 @admin_required
 def admin_page():
@@ -383,11 +373,12 @@ def qr_reissue(name):
         c = conn.cursor()
         c.execute("UPDATE staff SET login_token=? WHERE name=?", (token, name))
         conn.commit()
-    # 表示は staff_list でリンクとして見せるのでQR画像自体は generate_qr で生成
     flash(_("QRトークンを再発行しました。"))
     return redirect(url_for("staff_list"))
 
-# ---- QRコードログイン ----
+# ==============================
+# 📱 QRコードログイン
+# ==============================
 @app.route("/generate_qr", methods=["GET", "POST"])
 @admin_required
 def generate_qr():
@@ -425,7 +416,8 @@ def login_by_qr(token):
     else:
         return _("❌ 無効なQRコードです。再発行してください。"), 403
 
-# ============= 実行 =============
+# ==============================
+# 🚀 メイン実行
+# ==============================
 if __name__ == "__main__":
-    # デバッグ起動
     app.run(host="0.0.0.0", port=5000, debug=True)
