@@ -1,51 +1,52 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="{{ current_lang }}">
 <head>
-  <meta charset="UTF-8">
-  <title>記録一覧</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>{{ _('利用者登録') }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
-<div class="container py-4">
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}{% for m in msgs %}<div class="alert alert-info">{{ m }}</div>{% endfor %}{% endif %}
-  {% endwith %}
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>📖 記録一覧</h3>
-    <div>
-      <a class="btn btn-primary" href="{{ url_for('add_record') }}">＋ 記録追加</a>
-      <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">ホーム</a>
+  <div class="container mt-4" style="max-width:720px;">
+    <h2 class="mb-3">{{ _('➕ 利用者登録') }}</h2>
+    <form method="post" class="card p-4 shadow-sm">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">{{ _('名前') }}</label>
+          <input type="text" name="name" class="form-control" required />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ _('年齢') }}</label>
+          <input type="number" name="age" class="form-control" min="0" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ _('性別') }}</label>
+          <select name="gender" class="form-select">
+            <option value="">{{ _('- 未選択 -') }}</option>
+            <option>{{ _('男性') }}</option>
+            <option>{{ _('女性') }}</option>
+            <option>{{ _('その他') }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">{{ _('部屋番号') }}</label>
+          <input type="text" name="room_number" class="form-control" />
+        </div>
+        <div class="col-md-8">
+          <label class="form-label">{{ _('備考') }}</label>
+          <input type="text" name="notes" class="form-control" />
+        </div>
+      </div>
+      <div class="text-end mt-3">
+        <button class="btn btn-success">{{ _('登録') }}</button>
+      </div>
+    </form>
+    <div class="text-center mt-3">
+      <a href="{{ url_for('users_page') }}">{{ _('← 利用者一覧へ') }}</a>
     </div>
   </div>
-
-  <table class="table table-hover bg-white align-middle">
-    <thead>
-      <tr>
-        <th>ID</th><th>利用者</th><th>食事</th><th>服薬</th><th>排泄</th><th>体調</th>
-        <th>メモ</th><th>記入者</th><th>日時</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r[0] }}</td>
-        <td>{{ r[1] }}</td>
-        <td>{{ r[2] }}</td>
-        <td>{{ r[3] }}</td>
-        <td>{{ r[4] }}</td>
-        <td>{{ r[5] }}</td>
-        <td>{{ r[6] }}</td>
-        <td>{{ r[7] }}</td>
-        <td>{{ r[8] }}</td>
-      </tr>
-      {% else %}
-        <tr><td colspan="9" class="text-center text-muted">まだ記録がありません</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
 </body>
 </html>
+
 
 
 
