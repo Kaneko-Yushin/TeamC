@@ -1,16 +1,21 @@
 <!DOCTYPE html>
-<html lang="{{ CURRENT_LANG }}">
+<html lang="{{ current_lang }}">
 <head>
   <meta charset="UTF-8">
-  <title>{{ _("スタッフログイン") }}</title>
+  <title>{{ _("🔑 スタッフログイン") }}</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-  <div class="container mt-5">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2>🔑 {{ _("スタッフログイン") }}</h2>
-      {% include "_lang_switcher.html" %}
-    </div>
+  <div class="container mt-5" style="max-width:520px;">
+    <h2 class="text-center mb-4">
+      {% if mode == "register" %}{{ _("＋ 新規スタッフ登録") }}{% else %}{{ _("🔑 スタッフログイン") }}{% endif %}
+    </h2>
+
+    {% with msgs = get_flashed_messages() %}
+      {% if msgs %}
+        <div class="alert alert-info">{{ msgs[-1] }}</div>
+      {% endif %}
+    {% endwith %}
 
     <form method="post" class="card p-4 shadow">
       <div class="mb-3">
@@ -18,18 +23,19 @@
         <input type="text" name="name" class="form-control" required>
       </div>
       <div class="mb-3">
-        <label class="form-label">{{ _("パスワード") }}</label>
+        <label class="form-label">Password</label>
         <input type="password" name="password" class="form-control" required>
       </div>
-      <button type="submit" class="btn btn-primary w-100">{{ _("ログイン") }}</button>
+      <button type="submit" class="btn btn-primary w-100">
+        {% if mode == "register" %}{{ _("＋ 新規スタッフ登録") }}{% else %}{{ _("🔑 スタッフログイン") }}{% endif %}
+      </button>
     </form>
 
     <div class="text-center mt-3">
-      <a href="/staff_register">{{ _("新規登録はこちら") }}</a>
-      <br>
-      <a href="/">{{ _("← ホームに戻る") }}</a>
+      <a href="{{ url_for('home') }}">← Home</a>
     </div>
   </div>
 </body>
 </html>
+
 

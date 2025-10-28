@@ -1,47 +1,53 @@
 <!DOCTYPE html>
 <html lang="{{ current_lang }}">
 <head>
-  <meta charset="UTF-8" />
-  <title>{{ _('管理ページ - デジタル介護日誌') }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>{{ _("⚙ 管理ページ") }}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    .header { background:#4C9F70; color:#fff; text-align:center; padding:1.3rem; }
-    .cardx { border:none; border-radius:1rem; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+    .header { background:#4C9F70; color:#fff; text-align:center; padding:1.5rem; border-bottom-left-radius:1rem; border-bottom-right-radius:1rem; }
+    .card { border:none; border-radius:1rem; box-shadow:0 2px 6px rgba(0,0,0,.1); transition:transform .2s; }
+    .card:hover { transform: translateY(-4px); }
+    .btn-custom { background:#4C9F70; color:#fff; }
+    .btn-custom:hover { background:#3a815c; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h2>{{ _('🔧 管理ページ') }}</h2>
-    <p>{{ _('ログイン中：') }} <strong>{{ staff_name }}</strong></p>
+    <h2>{{ _("⚙ 管理ページ") }}</h2>
+    <p>{{ _("ログイン中：%s さん") % (staff_name or "-") }}</p>
   </div>
+
   <div class="container mt-4">
     <div class="row g-4">
       <div class="col-md-4">
-        <div class="card cardx p-3 text-center">
-          <h5>👥 {{ _('利用者管理') }}</h5>
-          <p class="text-muted">{{ _('利用者の登録・一覧・削除') }}</p>
-          <a href="{{ url_for('users_page') }}" class="btn btn-success">{{ _('開く') }}</a>
+        <div class="card text-center p-3">
+          <h5>{{ _("👥 利用者一覧") }}</h5>
+          <p>Residents</p>
+          <a href="{{ url_for('users_page') }}" class="btn btn-custom">{{ _("開く") if _('開く') != '開く' else 'Open' }}</a>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card cardx p-3 text-center">
-          <h5>📝 {{ _('記録管理') }}</h5>
-          <p class="text-muted">{{ _('全利用者の記録を閲覧') }}</p>
-          <a href="{{ url_for('records') }}" class="btn btn-success">{{ _('開く') }}</a>
+        <div class="card text-center p-3">
+          <h5>{{ _("📖 記録を見る") }}</h5>
+          <p>Records</p>
+          <a href="{{ url_for('records') }}" class="btn btn-custom">{{ _("開く") if _('開く') != '開く' else 'Open' }}</a>
         </div>
       </div>
       <div class="col-md-4">
-        <div class="card cardx p-3 text-center">
-          <h5>👩‍💼 {{ _('スタッフ管理') }}</h5>
-          <p class="text-muted">{{ _('スタッフ登録・QRログイン発行') }}</p>
-          <a href="{{ url_for('staff_list') }}" class="btn btn-success">{{ _('開く') }}</a>
+        <div class="card text-center p-3">
+          <h5>{{ _("👩‍💼 スタッフ一覧") }}</h5>
+          <p>Staff & QR</p>
+          <a href="{{ url_for('staff_list') }}" class="btn btn-custom">{{ _("開く") if _('開く') != '開く' else 'Open' }}</a>
         </div>
       </div>
     </div>
+
     <div class="text-center mt-4">
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('← ホームに戻る') }}</a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← Home</a>
     </div>
   </div>
 </body>
 </html>
+
 
