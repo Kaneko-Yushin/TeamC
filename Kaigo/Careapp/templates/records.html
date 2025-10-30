@@ -1,43 +1,45 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-  <meta charset="UTF-8">
-  <title>{{ _('📖 記録を見る') }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-  <div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h3>{{ _('📖 記録を見る') }}</h3>
-      <a class="btn btn-success" href="{{ url_for('add_record') }}">{{ _('📝 記録を追加') }}</a>
-    </div>
-
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>ID</th><th>{{ _('名前') }}</th><th>Meal</th><th>Medication</th><th>Toilet</th><th>Condition</th><th>Memo</th><th>Staff</th><th>At</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r[0] }}</td>
-          <td>{{ r[1] }}</td>
-          <td>{{ r[2] }}</td>
-          <td>{{ r[3] }}</td>
-          <td>{{ r[4] }}</td>
-          <td>{{ r[5] }}</td>
-          <td>{{ r[6] }}</td>
-          <td>{{ r[7] }}</td>
-          <td>{{ r[8] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
-    <div class="text-center mt-3">
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('← ホームに戻る') }}</a>
-    </div>
+{% extends "base.html" %}
+{% block body %}
+<div class="container py-4">
+  <h2 class="mb-3">📖 {{ _('Records') }}</h2>
+  {% with msgs = get_flashed_messages() %}
+    {% if msgs %}
+      <div class="alert alert-info">{{ msgs[-1] }}</div>
+    {% endif %}
+  {% endwith %}
+  <table class="table table-striped bg-white">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>{{ _('user') }}</th>
+        <th>{{ _('meal') }}</th>
+        <th>{{ _('medication') }}</th>
+        <th>{{ _('toilet') }}</th>
+        <th>{{ _('condition') }}</th>
+        <th>{{ _('memo') }}</th>
+        <th>{{ _('staff') }}</th>
+        <th>{{ _('created_at') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r[0] }}</td>
+        <td>{{ r[1] }}</td>
+        <td>{{ r[2] }}</td>
+        <td>{{ r[3] }}</td>
+        <td>{{ r[4] }}</td>
+        <td>{{ r[5] }}</td>
+        <td>{{ r[6] }}</td>
+        <td>{{ r[7] }}</td>
+        <td>{{ r[8] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="text-center mt-3">
+    <a href="{{ url_for('records_bp.add_record') }}" class="btn btn-success">{{ _('add_record_btn') }}</a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">{{ _('back_home') }}</a>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}

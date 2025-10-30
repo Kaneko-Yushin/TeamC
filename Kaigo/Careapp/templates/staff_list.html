@@ -1,70 +1,58 @@
-<!DOCTYPE html>
-<html lang="{{ current_lang }}">
-<head>
-  <meta charset="UTF-8" />
-  <title>{{ _('スタッフ一覧 - デジタル介護日誌') }}</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <style>
-    body { background:#f5f8f6; }
-    .header { background:#4C9F70; color:#fff; text-align:center; padding:1.3rem; }
-    table { background:#fff; border-radius:1rem; overflow:hidden; box-shadow:0 3px 8px rgba(0,0,0,.1); }
-    th { background:#e9f5ee; color:#4C9F70; }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <h2>👩‍💼 {{ _('スタッフ一覧') }}</h2>
-    <p>{{ _('登録済みスタッフの確認と管理') }}</p>
-  </div>
+{% extends "base.html" %}
+{% block body %}
+<div class="header">
+  <h2>👩‍💼 {{ _('StaffList') }}</h2>
+  <p>{{ current_lang=='ja' and '登録済みスタッフの確認と管理' or 'Manage registered staff' }}</p>
+</div>
 
-  <div class="container mt-4">
-    {% with msgs = get_flashed_messages() %}
-      {% if msgs %}
-        <div class="alert alert-info">{{ msgs[-1] }}</div>
-      {% endif %}
-    {% endwith %}
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>{{ _('名前') }}</th>
-          <th>{{ _('役職') }}</th>
-          <th>{{ _('QRログイン') }}</th>
-          <th>{{ _('操作') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in staff_list %}
-        <tr>
-          <td>{{ s[0] }}</td>
-          <td>{{ s[1] }}</td>
-          <td>
-            {% if s[3] == 'admin' %}{{ _('管理者') }}
-            {% elif s[3] == 'caregiver' %}{{ _('スタッフ') }}
-            {% else %}-{% endif %}
-          </td>
-          <td>
-            {% if s[4] %}
-              <a href="{{ url_for('login_by_qr', token=s[4]) }}" target="_blank">🔗 {{ _('QRリンク') }}</a>
-            {% else %}
-              <span class="text-muted">{{ _('未発行') }}</span>
-            {% endif %}
-          </td>
-          <td class="d-flex gap-2">
-            <a href="{{ url_for('qr_reissue', name=s[1]) }}" class="btn btn-sm btn-success">{{ _('QR再発行') }}</a>
-            <a href="{{ url_for('delete_staff', sid=s[0]) }}"
-               class="btn btn-sm btn-danger"
-               onclick="return confirm({{ _('本当に削除しますか？') | tojson }});">{{ _('削除') }}</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="container mt-4">
+  {% with msgs = get_flashed_messages() %}
+    {% if msgs %}
+      <div class="alert alert-info">{{ msgs[-1] }}</div>
+    {% endif %}
+  {% endwith %}
 
-    <div class="text-center mt-3">
-      <a href="{{ url_for('generate_qr') }}" class="btn btn-primary">{{ _('＋ QR発行（新規）') }}</a>
-      <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('← 管理ページに戻る') }}</a>
-    </div>
+  <table class="table table-striped align-middle bg-white cardx">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>{{ _('name') }}</th>
+        <th>{{ _('role') }}</th>
+        <th>{{ _('qr_login') }}</th>
+        <th>{{ current_lang=='ja' and '操作' or 'Actions' }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in staff_list %}
+      <tr>
+        <td>{{ s[0] }}</td>
+        <td>{{ s[1] }}</td>
+        <td>
+          {% if s[3] == 'admin' %}{{ _('role_admin') }}
+          {% elif s[3] == 'caregiver' %}{{ _('role_caregiver') }}
+          {% else %}-{% endif %}
+        </td>
+        <td>
+          {% if s[4] %}
+            <a href="{{ url_for('staff_admin_bp.login_by_qr', token=s[4]) }}" target="_blank">🔗 {{ _('qr_link') }}</a>
+          {% else %}
+            <span class="text-muted">{{ _('not_issued') }}</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('staff_admin_bp.qr_reissue', name=s[1]) }}" class="btn btn-sm btn-success">{{ _('qr_reissue') }}</a>
+          <a href="{{ url_for('staff_admin_bp.delete_staff', sid=s[0]) }}" class="btn btn-sm btn-danger"
+             onclick="return confirm('{{ _('really_delete') }}');">{{ _('delete_staff') }}</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="text-center mt-3">
+    <a href="{{ url_for('staff_admin_bp.generate_qr') }}" class="btn btn-primary">{{ _('qr_new') }}</a>
+    <a href="{{ url_for('staff_admin_bp.admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('back_admin') }}</a>
   </div>
-</body>
-</html>
+</div>
+{% endblock %}
+

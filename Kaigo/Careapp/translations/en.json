@@ -63,6 +63,20 @@
   "← 管理ページに戻る": "← Back to Admin",
   "管理者": "Admin",
   "スタッフ": "Staff",
+  {
+  "管理ページ": "Admin",
+  "デジタル介護日誌": "Digital Care Notes",
+  "ログイン中：{} さん": "Logged in: {}",
+  "Language:": "Language:",
+  "Residents": "Residents",
+  "登録されている利用者を確認": "Check registered residents",
+  "記録を見る": "View Records",
+  "これまでの記録を閲覧": "Browse past records",
+  "スタッフ一覧": "Staff List",
+  "Staff & QR": "Staff & QR",
+  "Open": "Open",
+  "Home": "Home"
+}
 
   "記録を追加": "Add Record",
   "記録を保存しました。": "Record has been saved.",
