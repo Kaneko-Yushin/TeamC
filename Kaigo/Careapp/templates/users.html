@@ -1,34 +1,27 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container py-4">
-  <h2 class="mb-3">👥 {{ _('Users') }}</h2>
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <div class="alert alert-info">{{ msgs[-1] }}</div>
-    {% endif %}
-  {% endwith %}
+  <h2 class="mb-3">{{ _('👥 利用者一覧') }}</h2>
   <div class="row g-3">
     {% for u in users %}
     <div class="col-md-6">
-      <div class="card cardx p-3">
-        <h5 class="mb-2">{{ u[1] }}</h5>
-        <div class="small text-muted">{{ _('age') }}: {{ u[2] or '-' }}</div>
-        <div class="small text-muted">{{ _('gender') }}: {{ u[3] or '-' }}</div>
-        <div class="small text-muted">{{ _('room_no') }}: {{ u[4] or '-' }}</div>
-        <div class="small text-muted">{{ _('notes') }}: {{ u[5] or '-' }}</div>
+      <div class="card p-3 shadow-sm">
+        <h5 class="mb-1">{{ u[1] }}</h5>
+        <div class="small text-muted">{{ _('年齢') }}: {{ u[2] or '-' }}</div>
+        <div class="small text-muted">{{ _('性別') }}: {{ u[3] or '-' }}</div>
+        <div class="small text-muted">{{ _('部屋番号') }}: {{ u[4] or '-' }}</div>
+        <div class="small text-muted">{{ _('備考') }}: {{ u[5] or '-' }}</div>
         <div class="mt-2">
           <a class="btn btn-sm btn-outline-danger"
-             href="{{ url_for('users_bp.delete_user', user_id=u[0]) }}"
-             onclick="return confirm('{{ _('really_delete') }}')">{{ _('delete') }}</a>
+             href="{{ url_for('delete_user', user_id=u[0]) }}"
+             onclick="return confirm('{{ _('本当に削除しますか？') }}');">{{ _('削除') }}</a>
         </div>
       </div>
     </div>
     {% endfor %}
   </div>
-  <div class="text-center mt-4">
-    <a href="{{ url_for('users_bp.add_user') }}" class="btn btn-success">{{ _('new_user') }}</a>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">{{ _('back_home') }}</a>
-  </div>
-</div>
-{% endblock %}
 
+  <div class="text-center mt-4 d-flex gap-2">
+    <a href="{{ url_for('add_user') }}" class="btn btn-success">{{ _('＋ 新しい利用者を登録') }}</a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('← ホームに戻る') }}</a>
+  </div>
+{% endblock %}

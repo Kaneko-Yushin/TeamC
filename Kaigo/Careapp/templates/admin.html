@@ -1,40 +1,10 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="header">
-  <h2>🔧 {{ _('Admin') }}</h2>
-  <p>{{ _('logged_in_as') % session.get('staff_name') }}</p>
-</div>
-<div class="container mt-4">
-  <div class="row g-4">
-    <div class="col-md-3">
-      <div class="card text-center p-3 cardx">
-        <h5>👥 {{ _('open_users_btn') }}</h5>
-        <a href="{{ url_for('users_bp.users_page') }}" class="btn btn-success">Open</a>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center p-3 cardx">
-        <h5>📝 {{ _('open_records') }}</h5>
-        <a href="{{ url_for('records_bp.records') }}" class="btn btn-success">Open</a>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center p-3 cardx">
-        <h5>👩‍💼 {{ _('open_staff') }}</h5>
-        <a href="{{ url_for('staff_admin_bp.staff_list') }}" class="btn btn-success">Open</a>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card text-center p-3 cardx">
-        <h5>🔄 {{ _('open_handover') }}</h5>
-        <a href="{{ url_for('handover_bp.handover') }}" class="btn btn成功 btn-success">Open</a>
-      </div>
-    </div>
+  <h2 class="mb-3">{{ _('管理ページ') }}</h2>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('staff_list') }}" class="btn btn-outline-primary">{{ _('スタッフ一覧') }}</a>
+    <a href="{{ url_for('generate_qr') }}" class="btn btn-outline-primary">{{ _('＋ QR発行（新規）') }}</a>
   </div>
-  <div class="text-center mt-4">
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('back_home') }}</a>
-    <a href="{{ url_for('auth_bp.logout') }}" class="btn btn-danger ms-2">{{ _('logout') }}</a>
-  </div>
-</div>
 {% endblock %}
+
 

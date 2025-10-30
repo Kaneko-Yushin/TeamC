@@ -1,33 +1,30 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container mt-4" style="max-width:680px;">
-  <h3 class="mb-3">👥 {{ _('new_user') }}</h3>
-  <form method="post" class="card p-4 shadow">
-    <div class="mb-3">
-      <label class="form-label">{{ _('name') }}</label>
-      <input type="text" name="name" class="form-control" required />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('age') }}</label>
-      <input type="number" name="age" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('gender') }}</label>
-      <input type="text" name="gender" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('room_no') }}</label>
-      <input type="text" name="room_number" class="form-control" />
-    </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('notes') }}</label>
-      <textarea name="notes" class="form-control" rows="2"></textarea>
-    </div>
-    <button type="submit" class="btn btn-success">{{ _('save') }}</button>
-    <a href="{{ url_for('users_bp.users_page') }}" class="btn btn-outline-secondary ms-2">{{ _('back_home') }}</a>
-  </form>
-</div>
+  <h2 class="mb-3">{{ _('記録一覧') }}</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>ID</th><th>{{ _('利用者') }}</th><th>{{ _('食事') }}</th><th>{{ _('服薬') }}</th>
+        <th>{{ _('排泄') }}</th><th>{{ _('体調') }}</th><th>{{ _('メモ') }}</th>
+        <th>{{ _('記録者') }}</th><th>{{ _('作成日時') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td>
+        <td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td>
+        <td>{{ r[7] }}</td><td>{{ r[8] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('add_record') }}" class="btn btn-success">{{ _('記録を追加') }}</a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームへ') }}</a>
+  </div>
 {% endblock %}
+
 
 
  

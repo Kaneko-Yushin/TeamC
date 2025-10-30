@@ -1,24 +1,21 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container mt-4" style="max-width:680px;">
-  <h3 class="mb-3">🔐 {{ _('GenerateQR') }}</h3>
-  <form method="post" class="card p-4 shadow">
-    <div class="mb-3">
-      <label class="form-label">{{ _('name') }}</label>
-      <input type="text" name="name" class="form-control" required />
+  <h3 class="mb-3">{{ _('QR発行') }}</h3>
+  <form method="post" class="row g-2">
+    <div class="col-md-4">
+      <label class="form-label">{{ _('名前') }}</label>
+      <input type="text" name="name" class="form-control" required>
     </div>
-    <div class="mb-3">
-      <label class="form-label">{{ _('role_select') }}</label>
+    <div class="col-md-3">
+      <label class="form-label">{{ _('役職') }}</label>
       <select name="role" class="form-select">
-        <option value="caregiver">{{ _('role_caregiver') }}</option>
-        <option value="admin">{{ _('role_admin') }}</option>
+        <option value="caregiver">{{ _('スタッフ') }}</option>
+        <option value="admin">{{ _('管理者') }}</option>
       </select>
     </div>
-    <button class="btn btn-success">Issue</button>
-    <a href="{{ url_for('staff_admin_bp.admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('back_admin') }}</a>
+    <div class="col-12">
+      <button class="btn btn-main">{{ _('QR発行') }}</button>
+      <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('戻る') }}</a>
+    </div>
   </form>
-  <p class="text-muted mt-3">
-    {{ current_lang=='ja' and 'QR画像が直接表示されます（右クリックで保存できます）。' or 'QR image will be returned directly.' }}
-  </p>
-</div>
 {% endblock %}

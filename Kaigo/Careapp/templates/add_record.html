@@ -1,82 +1,56 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container mt-4" style="max-width:820px;">
-  <h3 class="mb-3">📝 {{ _('add_record_btn') }}</h3>
-  <form method="post" class="card p-4 shadow">
-    <div class="mb-3">
-      <label class="form-label">{{ _('user') }}</label>
+  <h3 class="mb-3">{{ _('記録追加') }}</h3>
+  <form method="post" class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">{{ _('利用者') }}</label>
       <select name="user_id" class="form-select" required>
-        <option value="">{{ _('select_user') }}</option>
-        {% for u in users %}
-          <option value="{{ u[0] }}">{{ u[1] }}</option>
-        {% endfor %}
+        {% for u in users %}<option value="{{ u[0] }}">{{ u[1] }}</option>{% endfor %}
       </select>
     </div>
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">{{ _('meal') }}</label>
-        <div class="input-group">
-          <select name="meal" class="form-select" id="mealSel">
-            {% for p in MEAL_CHOICES %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
-          </select>
-          <input class="form-control" name="meal_other" id="mealOther" placeholder="{{ _('other') }}" />
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">{{ _('medication') }}</label>
-        <div class="input-group">
-          <select name="medication" class="form-select" id="medSel">
-            {% for p in MEDICATION_CHOICES %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
-          </select>
-          <input class="form-control" name="medication_other" id="medOther" placeholder="{{ _('other') }}" />
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">{{ _('toilet') }}</label>
-        <div class="input-group">
-          <select name="toilet" class="form-select" id="toiletSel">
-            {% for p in TOILET_CHOICES %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
-          </select>
-          <input class="form-control" name="toilet_other" id="toiletOther" placeholder="{{ _('other') }}" />
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">{{ _('condition') }}</label>
-        <div class="input-group">
-          <select name="condition" class="form-select" id="condSel">
-            {% for p in CONDITION_CHOICES %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
-          </select>
-          <input class="form-control" name="condition_other" id="condOther" placeholder="{{ _('other') }}" />
-        </div>
-      </div>
+    <div class="col-md-3">
+      <label class="form-label">{{ _('食事') }}</label>
+      <select name="meal" class="form-select">
+        {% for v in MEAL_CHOICES %}<option>{{ v }}</option>{% endfor %}
+      </select>
+      <input class="form-control mt-1" name="meal_other" placeholder="その他 → 詳細">
     </div>
 
-    <div class="mt-3">
-      <label class="form-label">{{ _('memo') }}</label>
-      <textarea name="memo" class="form-control" rows="2"></textarea>
+    <div class="col-md-3">
+      <label class="form-label">{{ _('服薬') }}</label>
+      <select name="medication" class="form-select">
+        {% for v in MEDICATION_CHOICES %}<option>{{ v }}</option>{% endfor %}
+      </select>
+      <input class="form-control mt-1" name="medication_other" placeholder="その他 → 詳細">
     </div>
 
-    <div class="mt-3">
-      <button class="btn btn-success">{{ _('save') }}</button>
-      <a href="{{ url_for('records_bp.records') }}" class="btn btn-outline-secondary ms-2">{{ _('back_home') }}</a>
+    <div class="col-md-3">
+      <label class="form-label">{{ _('排泄') }}</label>
+      <select name="toilet" class="form-select">
+        {% for v in TOILET_CHOICES %}<option>{{ v }}</option>{% endfor %}
+      </select>
+      <input class="form-control mt-1" name="toilet_other" placeholder="その他 → 詳細">
+    </div>
+
+    <div class="col-md-3">
+      <label class="form-label">{{ _('体調') }}</label>
+      <select name="condition" class="form-select">
+        {% for v in CONDITION_CHOICES %}<option>{{ v }}</option>{% endfor %}
+      </select>
+      <input class="form-control mt-1" name="condition_other" placeholder="その他 → 詳細">
+    </div>
+
+    <div class="col-12">
+      <label class="form-label">{{ _('メモ') }}</label>
+      <textarea name="memo" class="form-control" rows="3"></textarea>
+    </div>
+
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-main">{{ _('保存') }}</button>
+      <a href="{{ url_for('records') }}" class="btn btn-outline-secondary">{{ _('戻る') }}</a>
     </div>
   </form>
-</div>
-
-<script>
-  function toggleOther(selId, otherId) {
-    const sel = document.getElementById(selId);
-    const oth = document.getElementById(otherId);
-    if (!sel || !oth) return;
-    oth.disabled = (sel.value !== "その他" && sel.value !== "Other");
-  }
-  [["mealSel","mealOther"],["medSel","medOther"],["toiletSel","toiletOther"],["condSel","condOther"]]
-    .forEach(([sid,oid])=>{
-      const s=document.getElementById(sid);
-      if(s){ s.addEventListener("change",()=>toggleOther(sid,oid)); toggleOther(sid,oid); }
-    });
-</script>
 {% endblock %}
 
 

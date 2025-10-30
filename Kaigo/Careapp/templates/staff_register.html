@@ -1,25 +1,17 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container mt-5" style="max-width:520px;">
-  <h2 class="text-center mb-4">👩‍⚕️ {{ _('staff_register') }}</h2>
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <div class="alert alert-info">{{ msgs[-1] }}</div>
-    {% endif %}
-  {% endwith %}
-  <form method="post" class="card p-4 shadow">
-    <div class="mb-3">
-      <label class="form-label">{{ _('name') }}</label>
-      <input type="text" name="name" class="form-control" required />
+  <h3 class="mb-3">{{ _('スタッフ登録') }}</h3>
+  <form method="post" class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">{{ _('名前') }}</label>
+      <input name="name" class="form-control" required>
     </div>
-    <div class="mb-3">
-      <label class="form-label">Password</label>
-      <input type="password" name="password" class="form-control" required />
+    <div class="col-md-4">
+      <label class="form-label">{{ _('パスワード') }}</label>
+      <input name="password" type="password" class="form-control" required>
     </div>
-    <button type="submit" class="btn btn-success w-100">Register</button>
+    <div class="col-12">
+      <button class="btn btn-main">{{ _('登録') }}</button>
+    </div>
   </form>
-  <div class="text-center mt-3">
-    <a href="{{ url_for('home') }}">{{ _('back_home') }}</a>
-  </div>
-</div>
 {% endblock %}

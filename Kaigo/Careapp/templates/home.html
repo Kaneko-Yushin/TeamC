@@ -1,55 +1,15 @@
 {% extends "base.html" %}
-{% block title %}{{ _('ホーム - デジタル介護日誌') }}{% endblock %}
-
 {% block body %}
-<div class="text-center mt-5">
-  <h1 class="mb-4">🌿 {{ _('デジタル介護日誌') }}</h1>
-
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <div class="alert alert-info">{{ msgs[-1] }}</div>
+  <h2 class="mb-3">{{ _('ホーム') }}</h2>
+  <div class="d-flex flex-wrap gap-2">
+    <a href="{{ url_for('staff_login') }}" class="btn btn-main">{{ _('ログイン') }}</a>
+    <a href="{{ url_for('users_page') }}" class="btn btn-outline-primary">{{ _('利用者一覧') }}</a>
+    <a href="{{ url_for('records') }}" class="btn btn-outline-primary">{{ _('記録一覧') }}</a>
+    <a href="{{ url_for('handover') }}" class="btn btn-outline-primary">{{ _('引継ぎ') }}</a>
+    <a href="{{ url_for('admin_page') }}" class="btn btn-outline-success">{{ _('管理ページ') }}</a>
+    {% if session.get('staff_name') %}
+      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">{{ _('ログアウト') }}</a>
     {% endif %}
-  {% endwith %}
-
-  {% if staff_name %}
-    <h5 class="text-success mb-3">{{ _('ログイン中：') }} {{ staff_name }} {{ _('さん') }}</h5>
-
-    <!-- 管理者メニュー -->
-    {% if staff_role == 'admin' %}
-      <div class="mb-4">
-        <a href="{{ url_for('users_page') }}" class="btn btn-success m-2">👥 {{ _('利用者一覧') }}</a>
-        <a href="{{ url_for('add_user') }}" class="btn btn-success m-2">➕ {{ _('利用者登録') }}</a>
-        <a href="{{ url_for('staff_list') }}" class="btn btn-outline-success m-2">👩‍💼 {{ _('スタッフ一覧') }}</a>
-        <a href="{{ url_for('generate_qr') }}" class="btn btn-outline-primary m-2">🔗 {{ _('QR発行') }}</a>
-        <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary m-2">🛠 {{ _('管理ページ') }}</a>
-      </div>
-    {% endif %}
-
-    <!-- 共通メニュー -->
-    <div class="mb-4">
-      <a href="{{ url_for('add_record') }}" class="btn btn-primary m-2">📝 {{ _('記録を追加') }}</a>
-      <a href="{{ url_for('records') }}" class="btn btn-primary m-2">📖 {{ _('記録一覧') }}</a>
-      <a href="{{ url_for('handover') }}" class="btn btn-secondary m-2">🔄 {{ _('引継ぎボード') }}</a>
-    </div>
-
-    <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">{{ _('ログアウト') }}</a>
-
-  {% else %}
-    <!-- ログイン前メニュー -->
-    <p class="text-muted mb-4">{{ _('ログインまたはスタッフ登録を行ってください。') }}</p>
-    <a href="{{ url_for('staff_login') }}" class="btn btn-main m-2">🔑 {{ _('スタッフログイン') }}</a>
-    <a href="{{ url_for('staff_register') }}" class="btn btn-outline-success m-2">＋ {{ _('新規スタッフ登録') }}</a>
-  {% endif %}
-
-  <hr class="my-4">
-
-  <!-- 言語切替 -->
-  <div class="btn-group" role="group">
-    <a href="{{ url_for('set_language', lang='ja') }}"
-       class="btn btn-outline-secondary {% if current_lang=='ja' %}active{% endif %}">日本語</a>
-    <a href="{{ url_for('set_language', lang='en') }}"
-       class="btn btn-outline-secondary {% if current_lang=='en' %}active{% endif %}">English</a>
   </div>
-</div>
 {% endblock %}
 

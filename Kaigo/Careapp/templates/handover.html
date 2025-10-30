@@ -1,102 +1,72 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container py-4">
-  <h2 class="mb-3">🔄 {{ _('Handover') }}</h2>
+  <h2 class="mb-3">{{ _('引継ぎボード') }}</h2>
 
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <div class="alert alert-info">{{ msgs[-1] }}</div>
-    {% endif %}
-  {% endwith %}
-
-  <form class="row g-3 mb-3" method="get" action="{{ url_for('handover_bp.handover') }}">
+  <form class="row g-3 mb-3" method="get" action="{{ url_for('handover') }}">
     <div class="col-md-3">
-      <label class="form-label">{{ _('date') }}</label>
-      <input type="date" name="date" value="{{ on_date }}" class="form-control" />
+      <label class="form-label">{{ _('日付') }}</label>
+      <input type="date" name="date" class="form-control" value="{{ on_date }}">
     </div>
     <div class="col-md-3">
-      <label class="form-label">{{ _('shift') }}</label>
+      <label class="form-label">{{ _('シフト') }}</label>
       <select name="shift" class="form-select">
-        <option value="day" {{ 'selected' if shift=='day' else '' }}>{{ _('day') }}</option>
-        <option value="late" {{ 'selected' if shift=='late' else '' }}>{{ _('late') }}</option>
-        <option value="night" {{ 'selected' if shift=='night' else '' }}>{{ _('night') }}</option>
+        <option value="day"   {% if shift=='day' %}selected{% endif %}>{{ _('日勤') }}</option>
+        <option value="even"  {% if shift=='even' %}selected{% endif %}>{{ _('遅番') }}</option>
+        <option value="night" {% if shift=='night' %}selected{% endif %}>{{ _('夜勤') }}</option>
       </select>
     </div>
-    <div class="col-md-3 align-self-end">
-      <button class="btn btn-success">{{ _('apply') }}</button>
+    <div class="col-md-2 d-flex align-items-end">
+      <button class="btn btn-outline-primary">{{ _('表示') }}</button>
     </div>
   </form>
 
-  <div class="card cardx p-3 mb-4">
-    <form method="post" action="{{ url_for('handover_bp.handover_add') }}">
-      <input type="hidden" name="on_date" value="{{ on_date }}" />
-      <input type="hidden" name="shift" value="{{ shift }}" />
-      <div class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label">{{ _('resident') }}</label>
-          <select name="resident_id" class="form-select">
-            <option value="">-</option>
-            {% for r in residents %}
-              <option value="{{ r[0] }}">{{ r[1] }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">{{ _('priority') }}</label>
-          <select name="priority" class="form-select">
-            <option value="1">1</option>
-            <option value="2" selected>2</option>
-            <option value="3">3</option>
-          </select>
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">{{ _('title') }}</label>
-          <input name="title" class="form-control" />
-        </div>
-        <div class="col-md-12">
-          <label class="form-label">{{ _('body') }}</label>
-          <textarea name="body" class="form-control" rows="2"></textarea>
-        </div>
+  <form method="post" action="{{ url_for('handover_add') }}" class="card card-body mb-4">
+    <div class="row g-2">
+      <input type="hidden" name="on_date" value="{{ on_date }}">
+      <input type="hidden" name="shift" value="{{ shift }}">
+      <div class="col-md-3">
+        <label class="form-label">{{ _('対象者') }}</label>
+        <select name="resident_id" class="form-select">
+          <option value="">{{ _('- なし -') }}</option>
+          {% for u in residents %}
+            <option value="{{ u[0] }}">{{ u[1] }}</option>
+          {% endfor %}
+        </select>
       </div>
-      <div class="mt-3">
-        <button class="btn btn-success">{{ _('add') }}</button>
+      <div class="col-md-2">
+        <label class="form-label">{{ _('優先度') }}</label>
+        <select name="priority" class="form-select"><option>1</option><option selected>2</option><option>3</option></select>
       </div>
-    </form>
-  </div>
+      <div class="col-md-7">
+        <label class="form-label">{{ _('タイトル') }}</label>
+        <input name="title" class="form-control">
+      </div>
+      <div class="col-12">
+        <label class="form-label">{{ _('内容') }}</label>
+        <textarea name="body" class="form-control" rows="3"></textarea>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-main">{{ _('追加') }}</button>
+      </div>
+    </div>
+  </form>
 
-  <table class="table table-striped bg-white">
+  <table class="table table-striped">
     <thead>
       <tr>
-        <th>ID</th>
-        <th>{{ _('date') }}</th>
-        <th>{{ _('shift') }}</th>
-        <th>{{ _('resident') }}</th>
-        <th>{{ _('priority') }}</th>
-        <th>{{ _('title') }}</th>
-        <th>{{ _('body') }}</th>
-        <th>{{ _('created_at') }}</th>
+        <th>ID</th><th>{{ _('日付') }}</th><th>{{ _('シフト') }}</th><th>{{ _('対象者') }}</th>
+        <th>{{ _('優先度') }}</th><th>{{ _('タイトル') }}</th><th>{{ _('内容') }}</th><th>{{ _('作成') }}</th>
       </tr>
     </thead>
     <tbody>
       {% for h in items %}
       <tr>
-        <td>{{ h[0] }}</td>
-        <td>{{ h[1] }}</td>
-        <td>{{ h[2] }}</td>
-        <td>{{ h[3] or '-' }}</td>
-        <td>{{ h[4] }}</td>
-        <td>{{ h[5] }}</td>
-        <td>{{ h[6] }}</td>
-        <td>{{ h[7] }}</td>
+        <td>{{ h[0] }}</td><td>{{ h[1] }}</td><td>{{ h[2] }}</td><td>{{ h[3] or '-' }}</td>
+        <td>{{ h[4] }}</td><td>{{ h[5] }}</td><td>{{ h[6] }}</td><td>{{ h[7] }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
-  <div class="text-center mt-3">
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('back_home') }}</a>
-  </div>
-</div>
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームへ') }}</a>
 {% endblock %}
-
-
