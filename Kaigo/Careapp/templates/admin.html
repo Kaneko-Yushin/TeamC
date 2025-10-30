@@ -1,14 +1,12 @@
 {% extends "base.html" %}
-{% block title %}{{ _('admin_title') if _ else 'Admin' }}{% endblock %}
-
 {% block body %}
 <style>
-  /* 2枚目のホーム画面風のカードデザイン */
-  .section-title{
+  body { background:#f5f8f6; }
+  .section-title {
     font-weight: 800;
     font-size: clamp(26px, 3.2vw, 40px);
     text-align: center;
-    letter-spacing: .06em;
+    letter-spacing: .05em;
     margin: 24px 0 28px;
   }
   .tile {
@@ -21,70 +19,57 @@
     transition: transform .08s ease, box-shadow .2s ease;
     height: 100%;
   }
-  .tile:hover{ transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.09); }
-  .tile .emoji{ font-size: 54px; line-height: 1; margin-bottom: 12px; }
-  .tile .title{ font-weight: 700; font-size: 22px; margin-bottom: 6px; color:#0f5132; }
-  .tile .desc{ color:#6b7280; font-size: 14px; min-height: 1.4em; }
-  .btn-main{
-    background:#2f855a; color:#fff; border: none;
-  }
-  .btn-main:hover{ background:#276749; color:#fff; }
-  .top-actions{
-    display:flex; align-items:center; gap:.6rem; margin-top:6px;
-  }
+  .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.09); }
+  .tile .emoji { font-size: 54px; line-height: 1; margin-bottom: 12px; }
+  .tile .title { font-weight: 700; font-size: 22px; margin-bottom: 6px; color:#0f5132; }
+  .tile .desc { color:#6b7280; font-size: 14px; min-height: 1.4em; }
 </style>
 
 <div class="container py-3">
-
-  <!-- 上部アクション（戻るボタン） -->
-  <div class="top-actions">
+  <div class="d-flex justify-content-between align-items-center mb-3">
     <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">
-      ← {{ _('back_home') if _ else 'Back to Home' }}
+      ← {{ _('戻る') }}
     </a>
+    <div>
+      <a class="btn btn-sm btn-outline-secondary {% if current_lang=='ja' %}active{% endif %}"
+         href="{{ url_for('set_language', lang='ja') }}">日本語</a>
+      <a class="btn btn-sm btn-outline-secondary {% if current_lang=='en' %}active{% endif %}"
+         href="{{ url_for('set_language', lang='en') }}">English</a>
+    </div>
   </div>
 
-  <!-- セクションタイトル（ホーム風） -->
-  <h2 class="section-title">{{ _('admin_page') if _ else 'Admin' }}</h2>
+  <h2 class="section-title">{{ _('管理ページ') }}</h2>
 
-  <!-- 3カード：ホームと同じノリ -->
   <div class="row g-4">
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('users_page') }}" class="text-decoration-none d-block h-100">
-        <div class="tile">
-          <div class="emoji">👥</div>
-          <div class="title">{{ _('residents') if _ else 'Residents' }}</div>
-          <div class="desc">{{ _('residents_desc') if _ else 'View registered residents' }}</div>
-        </div>
-      </a>
-    </div>
-
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('records') }}" class="text-decoration-none d-block h-100">
-        <div class="tile">
-          <div class="emoji">📘</div>
-          <div class="title">{{ _('records') if _ else 'Records' }}</div>
-          <div class="desc">{{ _('records_desc') if _ else 'See all care records' }}</div>
-        </div>
-      </a>
-    </div>
-
     <div class="col-12 col-md-6 col-lg-4">
       <a href="{{ url_for('staff_list') }}" class="text-decoration-none d-block h-100">
         <div class="tile">
           <div class="emoji">👩‍💼</div>
-          <div class="title">{{ _('staff_and_qr') if _ else 'Staff & QR' }}</div>
-          <div class="desc">{{ _('staff_and_qr_desc') if _ else 'Manage staff / QR login' }}</div>
+          <div class="title">{{ _('スタッフ一覧') }}</div>
+          <div class="desc">{{ _('登録済みスタッフの確認と管理') }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('generate_qr') }}" class="text-decoration-none d-block h-100">
+        <div class="tile">
+          <div class="emoji">🔗</div>
+          <div class="title">{{ _('QR発行') }}</div>
+          <div class="desc">{{ _('スタッフのQRログインを作成') }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('users_page') }}" class="text-decoration-none d-block h-100">
+        <div class="tile">
+          <div class="emoji">👥</div>
+          <div class="title">{{ _('利用者管理') }}</div>
+          <div class="desc">{{ _('利用者情報の編集と確認') }}</div>
         </div>
       </a>
     </div>
   </div>
-
-  <!-- 追加アクション -->
-  <div class="text-center mt-4">
-    <a href="{{ url_for('generate_qr') }}" class="btn btn-main">
-      ＋ {{ _('qr_issue_new') if _ else 'Issue QR (New)' }}
-    </a>
-  </div>
-
 </div>
 {% endblock %}
