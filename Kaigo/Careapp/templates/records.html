@@ -1,24 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="container py-4">
-  <h2 class="mb-3">📖 {{ _('Records') }}</h2>
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}
-      <div class="alert alert-info">{{ msgs[-1] }}</div>
-    {% endif %}
-  {% endwith %}
-  <table class="table table-striped bg-white">
+  <h2 class="mb-3">{{ _('記録一覧') }}</h2>
+  <table class="table table-striped">
     <thead>
       <tr>
         <th>ID</th>
-        <th>{{ _('user') }}</th>
-        <th>{{ _('meal') }}</th>
-        <th>{{ _('medication') }}</th>
-        <th>{{ _('toilet') }}</th>
-        <th>{{ _('condition') }}</th>
-        <th>{{ _('memo') }}</th>
-        <th>{{ _('staff') }}</th>
-        <th>{{ _('created_at') }}</th>
+        <th>{{ _('利用者') }}</th>
+        <th>{{ _('食事') }}</th>
+        <th>{{ _('服薬') }}</th>
+        <th>{{ _('排泄') }}</th>
+        <th>{{ _('体調') }}</th>
+        <th>{{ _('メモ') }}</th>
+        <th>{{ _('記録者') }}</th>
+        <th>{{ _('作成日時') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -37,9 +31,8 @@
       {% endfor %}
     </tbody>
   </table>
-  <div class="text-center mt-3">
-    <a href="{{ url_for('records_bp.add_record') }}" class="btn btn-success">{{ _('add_record_btn') }}</a>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">{{ _('back_home') }}</a>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('add_record') }}" class="btn btn-success">{{ _('記録を追加') }}</a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームへ') }}</a>
   </div>
-</div>
 {% endblock %}
