@@ -1,15 +1,33 @@
 {% extends "base.html" %}
 {% block body %}
-  <h2 class="mb-3">{{ _('ホーム') }}</h2>
-  <div class="d-flex flex-wrap gap-2">
-    <a href="{{ url_for('staff_login') }}" class="btn btn-main">{{ _('ログイン') }}</a>
-    <a href="{{ url_for('users_page') }}" class="btn btn-outline-primary">{{ _('利用者一覧') }}</a>
-    <a href="{{ url_for('records') }}" class="btn btn-outline-primary">{{ _('記録一覧') }}</a>
-    <a href="{{ url_for('handover') }}" class="btn btn-outline-primary">{{ _('引継ぎ') }}</a>
-    <a href="{{ url_for('admin_page') }}" class="btn btn-outline-success">{{ _('管理ページ') }}</a>
-    {% if session.get('staff_name') %}
-      <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">{{ _('ログアウト') }}</a>
-    {% endif %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5 class="mb-2">{{ _('記録一覧') }}</h5>
+      <a class="btn btn-primary" href="{{ url_for('records') }}">{{ _('記録一覧') }}</a>
+      <a class="btn btn-outline-primary ms-2" href="{{ url_for('add_record') }}">{{ _('記録追加') }}</a>
+    </div>
   </div>
-{% endblock %}
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5 class="mb-2">{{ _('引継ぎ') }}</h5>
+      <a class="btn btn-primary" href="{{ url_for('handover') }}">{{ _('引継ぎ') }}</a>
+    </div>
+  </div>
 
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5 class="mb-2">{{ _('利用者一覧') }}</h5>
+      <a class="btn btn-outline-secondary" href="{{ url_for('users_page') }}">{{ _('利用者一覧') }}</a>
+      <a class="btn btn-outline-secondary ms-2" href="{{ url_for('add_user') }}">{{ _('利用者追加') }}</a>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5 class="mb-2">{{ _('管理ページ') }}</h5>
+      <a class="btn btn-outline-success" href="{{ url_for('admin_page') }}">{{ _('管理ページ') }}</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

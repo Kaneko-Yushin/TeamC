@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% block body %}
-  <h3 class="mb-3">{{ _('スタッフ登録') }}</h3>
-  <form method="post" class="row g-3">
-    <div class="col-md-4">
-      <label class="form-label">{{ _('名前') }}</label>
-      <input name="name" class="form-control" required>
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('スタッフ登録') }}</h4>
+  <form method="post">
+    <div class="mb-2"><input class="form-control" name="name" placeholder="name"></div>
+    <div class="mb-2"><input class="form-control" name="password" placeholder="password"></div>
+    <div class="mb-2">
+      <select class="form-select" name="role">
+        <option value="caregiver">{{ _('スタッフ') }}</option>
+        <option value="admin">{{ _('管理者') }}</option>
+      </select>
     </div>
-    <div class="col-md-4">
-      <label class="form-label">{{ _('パスワード') }}</label>
-      <input name="password" type="password" class="form-control" required>
-    </div>
-    <div class="col-12">
-      <button class="btn btn-main">{{ _('登録') }}</button>
-    </div>
+    <button class="btn btn-primary">{{ _('登録') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('home') }}">{{ _('ホームに戻る') }}</a>
   </form>
+</div>
 {% endblock %}

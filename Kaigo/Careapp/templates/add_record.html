@@ -1,57 +1,23 @@
 {% extends "base.html" %}
 {% block body %}
-  <h3 class="mb-3">{{ _('記録追加') }}</h3>
-  <form method="post" class="row g-3">
-    <div class="col-md-4">
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('記録追加') }}</h4>
+  <form method="post">
+    <div class="mb-2">
       <label class="form-label">{{ _('利用者') }}</label>
-      <select name="user_id" class="form-select" required>
+      <select class="form-select" name="user_id">
         {% for u in users %}<option value="{{ u[0] }}">{{ u[1] }}</option>{% endfor %}
       </select>
     </div>
-
-    <div class="col-md-3">
-      <label class="form-label">{{ _('食事') }}</label>
-      <select name="meal" class="form-select">
-        {% for v in MEAL_CHOICES %}<option>{{ v }}</option>{% endfor %}
-      </select>
-      <input class="form-control mt-1" name="meal_other" placeholder="その他 → 詳細">
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">{{ _('服薬') }}</label>
-      <select name="medication" class="form-select">
-        {% for v in MEDICATION_CHOICES %}<option>{{ v }}</option>{% endfor %}
-      </select>
-      <input class="form-control mt-1" name="medication_other" placeholder="その他 → 詳細">
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">{{ _('排泄') }}</label>
-      <select name="toilet" class="form-select">
-        {% for v in TOILET_CHOICES %}<option>{{ v }}</option>{% endfor %}
-      </select>
-      <input class="form-control mt-1" name="toilet_other" placeholder="その他 → 詳細">
-    </div>
-
-    <div class="col-md-3">
-      <label class="form-label">{{ _('体調') }}</label>
-      <select name="condition" class="form-select">
-        {% for v in CONDITION_CHOICES %}<option>{{ v }}</option>{% endfor %}
-      </select>
-      <input class="form-control mt-1" name="condition_other" placeholder="その他 → 詳細">
-    </div>
-
-    <div class="col-12">
-      <label class="form-label">{{ _('メモ') }}</label>
-      <textarea name="memo" class="form-control" rows="3"></textarea>
-    </div>
-
-    <div class="col-12 d-flex gap-2">
-      <button class="btn btn-main">{{ _('保存') }}</button>
-      <a href="{{ url_for('records') }}" class="btn btn-outline-secondary">{{ _('戻る') }}</a>
-    </div>
+    <div class="mb-2"><input class="form-control" name="meal" placeholder="{{ _('食事') }}"></div>
+    <div class="mb-2"><input class="form-control" name="medication" placeholder="{{ _('服薬') }}"></div>
+    <div class="mb-2"><input class="form-control" name="toilet" placeholder="{{ _('排泄') }}"></div>
+    <div class="mb-2"><input class="form-control" name="condition" placeholder="{{ _('体調') }}"></div>
+    <div class="mb-2"><input class="form-control" name="memo" placeholder="{{ _('メモ') }}"></div>
+    <button class="btn btn-primary">{{ _('保存') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('records') }}">{{ _('戻る') }}</a>
   </form>
+</div>
 {% endblock %}
-
 
 

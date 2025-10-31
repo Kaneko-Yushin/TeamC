@@ -1,28 +1,17 @@
 {% extends "base.html" %}
 {% block body %}
-  <h2 class="mb-3">{{ _('記録一覧') }}</h2>
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>ID</th><th>{{ _('利用者') }}</th><th>{{ _('食事') }}</th><th>{{ _('服薬') }}</th>
-        <th>{{ _('排泄') }}</th><th>{{ _('体調') }}</th><th>{{ _('メモ') }}</th>
-        <th>{{ _('記録者') }}</th><th>{{ _('作成日時') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in rows %}
-      <tr>
-        <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td>
-        <td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td>
-        <td>{{ r[7] }}</td><td>{{ r[8] }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  <div class="d-flex gap-2">
-    <a href="{{ url_for('add_record') }}" class="btn btn-success">{{ _('記録を追加') }}</a>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームへ') }}</a>
-  </div>
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('利用者追加') }}</h4>
+  <form method="post">
+    <div class="mb-2"><input class="form-control" name="name" placeholder="{{ _('利用者') }}"></div>
+    <div class="mb-2"><input class="form-control" name="age" placeholder="{{ _('年齢') }}"></div>
+    <div class="mb-2"><input class="form-control" name="gender" placeholder="{{ _('性別') }}"></div>
+    <div class="mb-2"><input class="form-control" name="room_number" placeholder="{{ _('部屋番号') }}"></div>
+    <div class="mb-2"><input class="form-control" name="notes" placeholder="{{ _('備考') }}"></div>
+    <button class="btn btn-primary">{{ _('登録') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('users_page') }}">{{ _('戻る') }}</a>
+  </form>
+</div>
 {% endblock %}
 
 

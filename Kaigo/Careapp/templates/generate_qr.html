@@ -1,21 +1,15 @@
 {% extends "base.html" %}
 {% block body %}
-  <h3 class="mb-3">{{ _('QR発行') }}</h3>
-  <form method="post" class="row g-2">
-    <div class="col-md-4">
-      <label class="form-label">{{ _('名前') }}</label>
-      <input type="text" name="name" class="form-control" required>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">{{ _('役職') }}</label>
-      <select name="role" class="form-select">
-        <option value="caregiver">{{ _('スタッフ') }}</option>
-        <option value="admin">{{ _('管理者') }}</option>
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('QR発行') }}</h4>
+  <form method="post">
+    <div class="mb-2">
+      <select name="name" class="form-select">
+        {% for n in names %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
       </select>
     </div>
-    <div class="col-12">
-      <button class="btn btn-main">{{ _('QR発行') }}</button>
-      <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary ms-2">{{ _('戻る') }}</a>
-    </div>
+    <button class="btn btn-success">{{ _('QR発行') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('staff_list') }}">{{ _('戻る') }}</a>
   </form>
+</div>
 {% endblock %}
