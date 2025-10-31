@@ -1,72 +1,40 @@
 {% extends "base.html" %}
 {% block body %}
-  <h2 class="mb-3">{{ _('引継ぎボード') }}</h2>
+<div class="container py-4">
+  <h2 class="mb-3">{{ _('本日の引継ぎ') }}</h2>
 
-  <form class="row g-3 mb-3" method="get" action="{{ url_for('handover') }}">
-    <div class="col-md-3">
-      <label class="form-label">{{ _('日付') }}</label>
-      <input type="date" name="date" class="form-control" value="{{ on_date }}">
+  <form method="post" class="row g-2 mb-4">
+    <div class="col-md-2">
+      <input type="date" name="h_date" class="form-control" value="{{ today }}">
     </div>
-    <div class="col-md-3">
-      <label class="form-label">{{ _('シフト') }}</label>
-      <select name="shift" class="form-select">
-        <option value="day"   {% if shift=='day' %}selected{% endif %}>{{ _('日勤') }}</option>
-        <option value="even"  {% if shift=='even' %}selected{% endif %}>{{ _('遅番') }}</option>
-        <option value="night" {% if shift=='night' %}selected{% endif %}>{{ _('夜勤') }}</option>
-      </select>
+    <div class="col-md-2">
+      <input type="text" name="shift" class="form-control" placeholder="{{ _('シフト') }}">
     </div>
-    <div class="col-md-2 d-flex align-items-end">
-      <button class="btn btn-outline-primary">{{ _('表示') }}</button>
+    <div class="col-md-5">
+      <input type="text" name="note" class="form-control" placeholder="{{ _('内容') }}">
     </div>
-  </form>
-
-  <form method="post" action="{{ url_for('handover_add') }}" class="card card-body mb-4">
-    <div class="row g-2">
-      <input type="hidden" name="on_date" value="{{ on_date }}">
-      <input type="hidden" name="shift" value="{{ shift }}">
-      <div class="col-md-3">
-        <label class="form-label">{{ _('対象者') }}</label>
-        <select name="resident_id" class="form-select">
-          <option value="">{{ _('- なし -') }}</option>
-          {% for u in residents %}
-            <option value="{{ u[0] }}">{{ u[1] }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">{{ _('優先度') }}</label>
-        <select name="priority" class="form-select"><option>1</option><option selected>2</option><option>3</option></select>
-      </div>
-      <div class="col-md-7">
-        <label class="form-label">{{ _('タイトル') }}</label>
-        <input name="title" class="form-control">
-      </div>
-      <div class="col-12">
-        <label class="form-label">{{ _('内容') }}</label>
-        <textarea name="body" class="form-control" rows="3"></textarea>
-      </div>
-      <div class="col-12">
-        <button class="btn btn-main">{{ _('追加') }}</button>
-      </div>
+    <div class="col-md-2">
+      <input type="text" name="staff" class="form-control" placeholder="{{ _('担当') }}">
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary">{{ _('追加') }}</button>
     </div>
   </form>
 
-  <table class="table table-striped">
-    <thead>
-      <tr>
-        <th>ID</th><th>{{ _('日付') }}</th><th>{{ _('シフト') }}</th><th>{{ _('対象者') }}</th>
-        <th>{{ _('優先度') }}</th><th>{{ _('タイトル') }}</th><th>{{ _('内容') }}</th><th>{{ _('作成') }}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for h in items %}
-      <tr>
-        <td>{{ h[0] }}</td><td>{{ h[1] }}</td><td>{{ h[2] }}</td><td>{{ h[3] or '-' }}</td>
-        <td>{{ h[4] }}</td><td>{{ h[5] }}</td><td>{{ h[6] }}</td><td>{{ h[7] }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="list-group">
+    {% for r in rows %}
+    <div class="list-group-item">
+      <div class="fw-bold">{{ r[2] }} / {{ r[4] }}</div>
+      <div class="text-muted small">{{ r[1] }}</div>
+      <div>{{ r[3] }}</div>
+    </div>
+    {% else %}
+    <div class="text-muted">{{ _('当日の申し送り・シフト別') }}</div>
+    {% endfor %}
+  </div>
 
-  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームへ') }}</a>
+  <div class="mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('ホームに戻る') }}</a>
+  </div>
+</div>
 {% endblock %}
