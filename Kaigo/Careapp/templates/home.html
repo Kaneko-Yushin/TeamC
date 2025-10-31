@@ -1,33 +1,79 @@
 {% extends "base.html" %}
 {% block body %}
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card p-3">
-      <h5 class="mb-2">{{ _('記録一覧') }}</h5>
-      <a class="btn btn-primary" href="{{ url_for('records') }}">{{ _('記録一覧') }}</a>
-      <a class="btn btn-outline-primary ms-2" href="{{ url_for('add_record') }}">{{ _('記録追加') }}</a>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card p-3">
-      <h5 class="mb-2">{{ _('引継ぎ') }}</h5>
-      <a class="btn btn-primary" href="{{ url_for('handover') }}">{{ _('引継ぎ') }}</a>
-    </div>
+
+<h1 class="main-title">メインメニュー</h1>
+
+<div class="row g-4 pb-4">
+
+  <!-- 左上：Residents -->
+  <div class="col-12 col-md-6 col-lg-4">
+    <a class="text-decoration-none" href="{{ url_for('users_page') }}">
+      <div class="tile">
+        <div class="icon">👥</div>
+        <h5>Residents</h5>
+        <p>登録されている利用者を確認</p>
+      </div>
+    </a>
   </div>
 
-  <div class="col-md-6">
-    <div class="card p-3">
-      <h5 class="mb-2">{{ _('利用者一覧') }}</h5>
-      <a class="btn btn-outline-secondary" href="{{ url_for('users_page') }}">{{ _('利用者一覧') }}</a>
-      <a class="btn btn-outline-secondary ms-2" href="{{ url_for('add_user') }}">{{ _('利用者追加') }}</a>
-    </div>
+  <!-- 中央上：記録入力 -->
+  <div class="col-12 col-md-6 col-lg-4">
+    <a class="text-decoration-none" href="{{ url_for('add_record') }}">
+      <div class="tile">
+        <div class="icon">📝</div>
+        <h5>記録入力</h5>
+        <p>食事・服薬・排泄・体調など</p>
+      </div>
+    </a>
   </div>
 
-  <div class="col-md-6">
-    <div class="card p-3">
-      <h5 class="mb-2">{{ _('管理ページ') }}</h5>
-      <a class="btn btn-outline-success" href="{{ url_for('admin_page') }}">{{ _('管理ページ') }}</a>
-    </div>
+  <!-- 右上：記録一覧 -->
+  <div class="col-12 col-md-6 col-lg-4">
+    <a class="text-decoration-none" href="{{ url_for('records') }}">
+      <div class="tile">
+        <div class="icon">📘</div>
+        <h5>記録一覧</h5>
+        <p>これまでの記録を閲覧</p>
+      </div>
+    </a>
   </div>
+
+  <!-- 左下：利用者登録（adminのみ有効） -->
+  <div class="col-12 col-md-6 col-lg-4">
+    {% if session.get('staff_role') == 'admin' %}
+      <a class="text-decoration-none" href="{{ url_for('add_user') }}">
+    {% else %}
+      <a class="text-decoration-none" href="javascript:void(0)" onclick="alert('管理者のみ');">
+    {% endif %}
+      <div class="tile">
+        <div class="icon">➕</div>
+        <h5>利用者登録</h5>
+        <p>管理者のみ</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- 中央下：設定（= 管理ページ） -->
+  <div class="col-12 col-md-6 col-lg-4">
+    <a class="text-decoration-none" href="{{ url_for('admin_page') }}">
+      <div class="tile">
+        <div class="icon">⚙️</div>
+        <h5>設定</h5>
+        <p>スタッフ・QR発行など</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- 右下：引継ぎボード -->
+  <div class="col-12 col-md-6 col-lg-4">
+    <a class="text-decoration-none" href="{{ url_for('handover') }}">
+      <div class="tile">
+        <div class="icon">🗂️</div>
+        <h5>引継ぎボード</h5>
+        <p>当日の申し送り・シフト別</p>
+      </div>
+    </a>
+  </div>
+
 </div>
 {% endblock %}
