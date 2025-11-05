@@ -3,18 +3,21 @@
   "ログイン": "Login",
   "ログアウト": "Logout",
   "メインメニュー": "Main Menu",
+
   "利用者一覧": "Residents",
+  "登録されている利用者を確認": "View registered residents",
   "記録入力": "Add Record",
+  "食事・服薬・排泄・体調など": "Meals, Medication, Toileting, Condition, etc.",
   "記録一覧": "Record List",
+  "これまでの記録を閲覧": "View previous records",
   "利用者登録": "Add Resident",
   "設定": "Settings",
+  "スタッフ・QR発行など": "Staff & QR issuing",
   "引継ぎボード": "Handover Board",
-  "管理者のみ": "Admins only",
-  "登録されている利用者を確認": "View registered residents",
-  "食事・服薬・排泄・体調など": "Meals, Medication, Toileting, Condition, etc.",
-  "これまでの記録を閲覧": "View previous records",
   "当日の申し送り・シフト別": "Daily notes • by shift",
+
   "メニューを使うにはログインしてください": "Please log in to use the menu.",
+
   "ログインが必要です。": "Login required.",
   "管理者権限が必要です。": "Admin privileges required.",
   "名前またはパスワードが間違っています。": "Incorrect name or password.",
@@ -27,5 +30,12 @@
   "引継ぎを追加しました。": "Added a handover item.",
   "無効なQRコードです。": "Invalid QR code.",
   "ログアウトしました。": "You have been logged out.",
-  "言語を切り替えました。": "Language has been changed."
+  "言語を切り替えました。": "Language has been changed.",
+
+  "スタッフ一覧": "Staff List",
+  "スタッフ": "Staff",
+  "削除": "Delete",
+  "本当に削除しますか？": "Are you sure you want to delete?",
+  "QR発行": "Issue QR",
+  "戻る": "Back"
 }
