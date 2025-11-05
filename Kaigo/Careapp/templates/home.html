@@ -3,12 +3,12 @@
   <h1 class="text-center fw-bold mb-4" style="letter-spacing:.04em">{{ _("メインメニュー") }}</h1>
 
   <div class="row g-4">
-    <!-- Residents -->
+    <!-- 利用者一覧 -->
     <div class="col-12 col-md-6 col-lg-4">
       <a href="{{ url_for('users_page') }}" class="text-decoration-none d-block h-100">
         <div class="menu-card">
           <div class="menu-emoji">👥</div>
-          <div class="menu-title">{{ _("利用者一覧") if get_locale()!='en' else "Residents" }}</div>
+          <div class="menu-title">{{ _("利用者一覧") }}</div>
           <div class="menu-desc">{{ _("登録されている利用者を確認") }}</div>
         </div>
       </a>
@@ -38,7 +38,7 @@
 
     <!-- 利用者登録（管理者のみ） -->
     <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('add_user') }}" class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled pointer-events-none opacity-50{% endif %}">
+      <a href="{{ url_for('add_user') }}" class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled{% endif %}">
         <div class="menu-card">
           <div class="menu-emoji">➕</div>
           <div class="menu-title">{{ _("利用者登録") }}</div>
@@ -47,9 +47,9 @@
       </a>
     </div>
 
-    <!-- 設定（スタッフ・QR発行など / 管理ページ） -->
+    <!-- 設定（スタッフ・QR発行など） -->
     <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('admin_page') }}" class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled pointer-events-none opacity-50{% endif %}">
+      <a href="{{ url_for('admin_page') }}" class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled{% endif %}">
         <div class="menu-card">
           <div class="menu-emoji">⚙️</div>
           <div class="menu-title">{{ _("設定") }}</div>
