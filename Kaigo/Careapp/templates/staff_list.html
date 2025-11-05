@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {% extends "base.html" %}
 {% block body %}
 <div class="card p-3">
@@ -6,6 +7,34 @@
     <thead>
       <tr>
         <th>ID</th><th>{{ _('スタッフ') }}</th><th>Role</th><th>QR</th><th>Op</th>
+=======
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+<<<<<<< HEAD
+  <title>スタッフ一覧 - 管理</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3>👩‍💼 スタッフ一覧</h3>
+    <div>
+      <a class="btn btn-success" href="{{ url_for('staff_admin.add') }}">＋ 新規スタッフ</a>
+      <a class="btn btn-outline-secondary" href="{{ url_for('admin_page') }}">← 管理ページ</a>
+    </div>
+  </div>
+
+  <table class="table table-hover bg-white align-middle">
+    <thead>
+      <tr>
+        <th style="width:80px;">ID</th>
+        <th>名前</th>
+        <th style="width:140px;">役割</th>
+        <th style="width:220px;">QR/権限/Pass</th>
+        <th style="width:180px;">操作</th>
+>>>>>>> main
       </tr>
     </thead>
     <tbody>
@@ -13,6 +42,7 @@
       <tr>
         <td>{{ s[0] }}</td>
         <td>{{ s[1] }}</td>
+<<<<<<< HEAD
         <td>{% if s[3]=='admin' %}{{ _('管理者') }}{% else %}{{ _('スタッフ') }}{% endif %}</td>
         <td>
           {% if s[4] %}
@@ -34,3 +64,95 @@
   <a class="btn btn-outline-secondary ms-2" href="{{ url_for('admin_page') }}">{{ _('戻る') }}</a>
 </div>
 {% endblock %}
+=======
+        <td><span class="badge bg-info-subtle text-dark">{{ s[3] or 'caregiver' }}</span></td>
+        <td class="text-nowrap">
+          <a class="btn btn-sm btn-outline-success" href="{{ url_for('staff_admin.qr', sid=s[0]) }}">QR再発行</a>
+
+          <form class="d-inline" method="post" action="{{ url_for('staff_admin.change_role', sid=s[0]) }}">
+            <select name="role" class="form-select d-inline w-auto">
+              {% for r in ["admin","caregiver","nurse","carer"] %}
+                <option value="{{ r }}" {% if (s[3] or 'caregiver')==r %}selected{% endif %}>{{ r }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-sm btn-outline-primary">変更</button>
+          </form>
+
+          <form class="d-inline" method="post" action="{{ url_for('staff_admin.reset_password', sid=s[0]) }}"
+                onsubmit="return confirm('仮パスワードを発行します。よろしいですか？');">
+            <button class="btn btn-sm btn-outline-warning">PW再発行</button>
+          </form>
+        </td>
+        <td class="text-nowrap">
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('staff_admin.edit', sid=s[0]) }}">編集</a>
+          <form class="d-inline" method="post" action="{{ url_for('staff_admin.delete', sid=s[0]) }}"
+                onsubmit="return confirm('本当に削除しますか？');">
+            <button class="btn btn-sm btn-outline-danger">削除</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center text-muted">まだ登録がありません</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+=======
+  <title>スタッフ一覧 - デジタル介護日誌</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f5f8f6; }
+    .header { background:#4C9F70; color:white; text-align:center; padding:1.2rem; }
+    table { background: white; border-radius: .75rem; overflow: hidden; box-shadow: 0 3px 8px rgba(0,0,0,.08); }
+    th { background:#e9f5ee; color:#4C9F70; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h2>👩‍💼 スタッフ一覧</h2>
+    <p class="mb-0">登録済みスタッフの確認と管理</p>
+  </div>
+
+  <div class="container mt-4">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th><th>名前</th><th>役職</th><th>QRログイン</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in staff_list %}
+        <tr>
+          <td>{{ s[0] }}</td>
+          <td>{{ s[1] }}</td>
+          <td>{{ s[3] or "スタッフ" }}</td>
+          <td>
+            {% if s[4] %}
+              <a href="{{ url_for('login', token=s[4]) }}" target="_blank">🔗 QRリンク</a>
+            {% else %}
+              <span class="text-muted">未発行</span>
+            {% endif %}
+          </td>
+          <td>
+            <a class="btn btn-sm btn-success" href="{{ url_for('qr_reissue', name=s[1]) }}">QR再発行</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('generate_qr') }}" class="btn btn-primary">新規QR発行</a>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームへ</a>
+    </div>
+  </div>
+>>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
+</body>
+</html>
+
+
+<<<<<<< HEAD
+
+=======
+>>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
+>>>>>>> main

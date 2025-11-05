@@ -55,7 +55,7 @@ def _t(key, **kwargs):
             pass
     return s
 
-# Pythonでも使えるように
+# Python側でも使えるように
 _ = _t
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
