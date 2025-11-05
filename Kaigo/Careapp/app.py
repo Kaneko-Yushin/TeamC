@@ -487,6 +487,10 @@ def not_found(e):
     except Exception:
         return "Not Found", 404
 
+@app.context_processor
+def inject_lang():
+    return {"CURRENT_LANG": get_locale()}
+
 # ------------ 起動 ------------
 if __name__ == "__main__":
     # 管理系がこのDBを参照する場合用にパスを共有

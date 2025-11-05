@@ -1,49 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="{{ get_locale() }}">
-<head>
-  <meta charset="UTF-8">
-  <title>{% block title %}Care Notes{% endblock %}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    .appbar { background:#f8f9fa; border-bottom:1px solid #e5e7eb; }
-    .appbar a { text-decoration:none; }
-    .container-narrow { max-width: 980px; }
-  </style>
-</head>
-<body>
-  <nav class="appbar py-2">
-    <div class="container container-narrow d-flex align-items-center justify-content-between">
-      <div>
-        <a class="fw-bold me-3" href="{{ url_for('home') }}">📝 Digital Care Notes</a>
-        <a class="me-2" href="{{ url_for('records') }}">{{ _('記録一覧') }}</a>
-        <a class="me-2" href="{{ url_for('handover') }}">{{ _('引継ぎ') }}</a>
-        {% if session.get('staff_role') == 'admin' %}
-          <a class="me-2" href="{{ url_for('users_page') }}">{{ _('利用者') }}</a>
-          <a class="me-2" href="{{ url_for('admin_page') }}">{{ _('管理') }}</a>
-        {% endif %}
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <form action="{{ url_for('set_language', lang='ja') }}" method="get"><button class="btn btn-sm btn-outline-secondary">日本語</button></form>
-        <form action="{{ url_for('set_language', lang='en') }}" method="get"><button class="btn btn-sm btn-outline-secondary">English</button></form>
-        {% if session.get('staff_name') %}
-          <span class="text-muted small">{{ session.get('staff_name') }} ({{ session.get('staff_role') }})</span>
-          <a class="btn btn-sm btn-outline-danger" href="{{ url_for('logout') }}">{{ _('ログアウト') }}</a>
-        {% else %}
-          <a class="btn btn-sm btn-primary" href="{{ url_for('staff_login') }}">{{ _('ログイン') }}</a>
-        {% endif %}
+  <head>
+    <meta charset="utf-8">
+    <title>{{ _("デジタル介護日誌") }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <style>
+      .app-bar { background:#256b3f; color:#fff; }
+      .app-bar a { color:#fff; text-decoration:none; }
+      .main-wrap { background:#f5faf7; min-height:100vh; }
+      .menu-card {
+        background:#fff; border:none; border-radius:18px;
+        box-shadow:0 10px 26px rgba(0,0,0,.08);
+        padding:28px 20px; height:100%; text-align:center;
+        transition:transform .08s ease, box-shadow .2s ease;
+      }
+      .menu-card:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.1); }
+      .menu-emoji { font-size:56px; line-height:1; margin-bottom:12px; }
+      .menu-title { font-weight:800; font-size:22px; color:#0f5132; margin-bottom:6px; }
+      .menu-desc  { color:#6b7280; font-size:14px; }
+    </style>
+  </head>
+  <body class="main-wrap">
+    <!-- ヘッダー -->
+    <div class="app-bar py-2">
+      <div class="container d-flex align-items-center justify-content-between">
+        <div class="fw-bold">
+          <a href="{{ url_for('home') }}">{{ _("デジタル介護日誌") }}</a>
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+          <div class="small">
+            <span>Language:</span>
+            <a href="{{ url_for('set_language', lang='ja') }}">日本語</a>
+            <span class="mx-1">/</span>
+            <a href="{{ url_for('set_language', lang='en') }}">English</a>
+          </div>
+
+          {% if session.get('staff_name') %}
+            <span class="small">
+              {{ session.get('staff_name') }}
+              {% if session.get('staff_role') == 'admin' %}(admin){% endif %}
+            </span>
+            <a class="btn btn-sm btn-outline-light" href="{{ url_for('logout') }}">Logout</a>
+          {% endif %}
+        </div>
       </div>
     </div>
-  </nav>
 
-  <main class="container container-narrow py-4">
-    {% with msgs = get_flashed_messages() %}
-      {% if msgs %}
-        <div class="alert alert-info">{{ msgs[-1] }}</div>
-      {% endif %}
-    {% endwith %}
-    {% block body %}{% endblock %}
-  </main>
-</body>
+    <!-- 本文 -->
+    <div class="container py-4">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert alert-info mb-3">
+            {% for m in messages %}{{ m }}<br>{% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block body %}{% endblock %}
+    </div>
+  </body>
 </html>
-  
