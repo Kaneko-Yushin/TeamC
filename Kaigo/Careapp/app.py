@@ -27,7 +27,7 @@ def get_locale():
 
 babel.init_app(app, locale_selector=get_locale)
 # Jinja から _('...') を必ず呼べるように
-app.jinja_env.globals.update(_=_)
+app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
 # --------- DB 接続 ----------
 def get_connection():
