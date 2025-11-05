@@ -26,7 +26,7 @@ def get_locale():
 
 babel.init_app(app, locale_selector=get_locale)
 
-# -------------------- JSON翻訳辞書ロード --------------------
+# -------------------- JSON翻訳辞書 --------------------
 def _load_json_translations():
     data = {}
     for lang in app.config["LANGUAGES"]:
@@ -45,7 +45,7 @@ def _load_json_translations():
 TRANSLATIONS = _load_json_translations()
 
 def _t(key, **kwargs):
-    """JSON辞書から翻訳を返す（Jinja/Python両対応）"""
+    """JSON辞書から翻訳を返す"""
     lang = get_locale()
     s = TRANSLATIONS.get(lang, {}).get(key, key)
     if kwargs:
@@ -55,13 +55,11 @@ def _t(key, **kwargs):
             pass
     return s
 
-# Python側でも flash(_("...")) が使えるように
+# Pythonでも使えるように
 _ = _t
-
-# Jinjaで {{ _("...") }} / {{ get_locale() }} を使えるように
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
-# -------------------- i18n デバッグ＆再読み込み --------------------
+# -------------------- i18n再読み込み・デバッグ --------------------
 @app.route("/i18n/reload")
 def i18n_reload():
     global TRANSLATIONS
@@ -72,24 +70,11 @@ def i18n_reload():
 @app.route("/i18n/debug")
 def i18n_debug():
     lang = get_locale()
-    must_keys = [
-        "デジタル介護日誌","メインメニュー","利用者一覧","登録されている利用者を確認",
-        "記録入力","食事・服薬・排泄・体調など","記録一覧","これまでの記録を閲覧",
-        "利用者登録","管理者のみ","設定","スタッフ・QR発行など",
-        "引継ぎボード","当日の申し送り・シフト別","ログインが必要です。","ログアウト",
-        "言語を切り替えました。"
-    ]
-    miss = [k for k in must_keys if TRANSLATIONS.get(lang, {}).get(k) is None]
     return {
         "current_lang": lang,
-        "translation_count": len(TRANSLATIONS.get(lang, {})),
-        "missing_keys": miss
+        "keys_loaded": len(TRANSLATIONS.get(lang, {})),
+        "example": TRANSLATIONS.get(lang, {}).get("デジタル介護日誌", None)
     }
-
-@app.route("/i18n/show/<key>")
-def i18n_show(key):
-    k = request.args.get("k") or key
-    return {"lang": get_locale(), "key": k, "value": _t(k)}
 
 # -------------------- DB --------------------
 def get_connection():
@@ -130,7 +115,7 @@ def init_db():
 if not os.path.exists(DB_PATH):
     init_db()
 
-# -------------------- デコレータ --------------------
+# -------------------- 認可 --------------------
 def login_required(f):
     @wraps(f)
     def w(*a, **kw):
@@ -162,7 +147,7 @@ def set_language(lang):
 def home():
     return render_template("home.html")
 
-# -------------------- スタッフ登録・ログイン・ログアウト --------------------
+# -------------------- スタッフ登録・ログイン --------------------
 @app.route("/staff_register", methods=["GET", "POST"])
 def staff_register():
     if request.method == "POST":
@@ -211,7 +196,7 @@ def logout():
 def admin_page():
     return render_template("admin.html")
 
-# -------------------- スタッフ一覧・QR --------------------
+# -------------------- スタッフ一覧・削除・QR --------------------
 @app.route("/staff_list")
 @admin_required
 def staff_list():
@@ -220,6 +205,16 @@ def staff_list():
         c.execute("SELECT id, name, password, role, login_token FROM staff ORDER BY id")
         staff = c.fetchall()
     return render_template("staff_list.html", staff_list=staff)
+
+@app.route("/delete_staff/<int:sid>", methods=["GET", "POST"], endpoint="delete_staff")
+@admin_required
+def delete_staff(sid):
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM staff WHERE id=?", (sid,))
+        conn.commit()
+    flash(_("スタッフを削除しました。"))
+    return redirect(url_for("staff_list"))
 
 @app.route("/generate_qr", methods=["GET", "POST"])
 @admin_required
@@ -243,7 +238,6 @@ def generate_qr():
         img.save(buf, format="PNG")
         buf.seek(0)
         return send_file(buf, mimetype="image/png")
-
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM staff ORDER BY id")
@@ -325,21 +319,18 @@ def records():
 @app.route("/add_record", methods=["GET", "POST"], endpoint="add_record")
 @login_required
 def add_record():
-    # 利用者一覧（プルダウン用）
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT id, name FROM users ORDER BY id")
         users = c.fetchall()
-
     if request.method == "POST":
-        user_id    = request.form.get("user_id")
-        meal       = request.form.get("meal")
+        user_id = request.form.get("user_id")
+        meal = request.form.get("meal")
         medication = request.form.get("medication")
-        toilet     = request.form.get("toilet")
-        condition  = request.form.get("condition")
-        memo       = request.form.get("memo")
+        toilet = request.form.get("toilet")
+        condition = request.form.get("condition")
+        memo = request.form.get("memo")
         staff_name = session.get("staff_name")
-
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("""
@@ -347,10 +338,8 @@ def add_record():
                 VALUES(?,?,?,?,?,?,?)
             """, (user_id, meal, medication, toilet, condition, memo, staff_name))
             conn.commit()
-
         flash(_("記録を保存しました。"))
         return redirect(url_for("records"))
-
     return render_template("add_record.html", users=users)
 
 # -------------------- 引継ぎ --------------------
@@ -359,9 +348,9 @@ def add_record():
 def handover():
     if request.method == "POST":
         h_date = request.form.get("h_date") or date.today().isoformat()
-        shift  = request.form.get("shift") or "day"
-        note   = request.form.get("note") or ""
-        staff  = session.get("staff_name") or ""
+        shift = request.form.get("shift") or "day"
+        note = request.form.get("note") or ""
+        staff = session.get("staff_name") or ""
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("INSERT INTO handover(h_date, shift, note, staff) VALUES(?,?,?,?)",
@@ -381,8 +370,7 @@ def handover():
 def favicon():
     ico = os.path.join(app.root_path, "static", "favicon.ico")
     if os.path.exists(ico):
-        return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico",
-                                   mimetype="image/vnd.microsoft.icon")
+        return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
     return ("", 204)
 
 @app.errorhandler(404)
