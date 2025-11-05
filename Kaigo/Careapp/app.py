@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, send_file, session, url_for, flash
+from flask import Flask, render_template, request, redirect, send_file, send_from_directory, session, url_for, flash
 from functools import wraps
 import sqlite3, qrcode, io, secrets, os, json
 from datetime import date
@@ -44,7 +44,7 @@ def _load_json_translations():
 TRANSLATIONS = _load_json_translations()
 
 def _t(key, **kwargs):
-    """JSON辞書から翻訳を返す"""
+    """JSON辞書から翻訳を返す（Jinja/ Python両方で使用）"""
     lang = get_locale()
     s = TRANSLATIONS.get(lang, {}).get(key, key)
     if kwargs:
@@ -54,8 +54,11 @@ def _t(key, **kwargs):
             pass
     return s
 
-# Jinjaで {{ _("...") }} をこの関数に紐づける
-app.jinja_env.globals.update(_=_t, get_locale=get_locale)
+# ★ 重要：Python側でも flash(_("…")) が使えるように、_ をバインド
+_ = _t
+
+# Jinjaで {{ _("...") }} / {{ get_locale() }} を使えるようにする
+app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
 # -------------------- DB接続 --------------------
 def get_connection():
@@ -347,7 +350,11 @@ def handover():
 # -------------------- favicon / 404 --------------------
 @app.route("/favicon.ico")
 def favicon():
-    return send_file(os.path.join(app.root_path, "static", "favicon.ico"))
+    # static/favicon.ico があれば返す。無ければ 204（空）でOKにする
+    ico_path = os.path.join(app.root_path, "static", "favicon.ico")
+    if os.path.exists(ico_path):
+        return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
+    return ("", 204)
 
 @app.errorhandler(404)
 def not_found(e):
