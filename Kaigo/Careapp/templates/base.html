@@ -10,16 +10,11 @@
       body.main-wrap { background:#f5faf7; min-height:100vh; font-family:"Segoe UI", system-ui, sans-serif; }
       .app-bar { background:#256b3f; color:#fff; }
       .app-bar a { color:#fff; text-decoration:none; }
-      .menu-card {
-        background:#fff; border:none; border-radius:18px;
-        box-shadow:0 10px 26px rgba(0,0,0,.08);
-        padding:28px 20px; height:100%; text-align:center;
-        transition:transform .08s ease, box-shadow .2s ease;
-      }
+      .menu-card { background:#fff; border:none; border-radius:18px; box-shadow:0 10px 26px rgba(0,0,0,.08);
+                   padding:28px 20px; height:100%; text-align:center; transition:transform .08s ease, box-shadow .2s ease; }
       .menu-card:hover { transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,0,0,.1); }
       .menu-emoji { font-size:56px; line-height:1; margin-bottom:12px; }
-      .menu-title { font-weight:800; font-size:22px; color:#0f5132; margin-bottom:6px; }
-      .menu-desc  { color:#6b7280; font-size:14px; }
+      .menu-title { font-weight:800; font-size:22px; color:#0f5132; margin-bottom:0; }
       .disabled { pointer-events:none; opacity:.5; }
     </style>
   </head>
@@ -37,8 +32,7 @@
           </div>
           {% if session.get('staff_name') %}
             <span class="small">
-              {{ session.get('staff_name') }}
-              {% if session.get('staff_role') == 'admin' %}(admin){% endif %}
+              {{ session.get('staff_name') }}{% if session.get('staff_role') == 'admin' %} (admin){% endif %}
             </span>
             <a class="btn btn-sm btn-outline-light" href="{{ url_for('logout') }}">{{ _("ログアウト") }}</a>
           {% else %}
@@ -48,7 +42,7 @@
       </div>
     </div>
 
-    <!-- 本文 -->
+    <!-- フラッシュ & 本文 -->
     <div class="container py-4">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
