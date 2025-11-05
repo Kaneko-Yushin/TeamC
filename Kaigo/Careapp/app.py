@@ -55,10 +55,10 @@ def _t(key, **kwargs):
             pass
     return s
 
-# Python側でも使えるように
+# Python側でも flash(_("...")) が使えるように
 _ = _t
 
-# Jinjaで {{ _("...") }} を使用可能にする
+# Jinjaで {{ _("...") }} / {{ get_locale() }} を使えるように
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
 # -------------------- i18n デバッグ＆再読み込み --------------------
@@ -273,7 +273,7 @@ def login_by_qr(token):
     flash(_("%(n)s さんでログインしました。", n=row[0]))
     return redirect(url_for("home"))
 
-# -------------------- 利用者・記録・引継ぎ --------------------
+# -------------------- 利用者 --------------------
 @app.route("/users")
 @admin_required
 def users_page():
@@ -298,6 +298,17 @@ def add_user():
         return redirect(url_for("users_page"))
     return render_template("add_user.html")
 
+@app.route("/delete_user/<int:user_id>")
+@admin_required
+def delete_user(user_id):
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM users WHERE id=?", (user_id,))
+        conn.commit()
+    flash(_("利用者を削除しました。"))
+    return redirect(url_for("users_page"))
+
+# -------------------- 記録 --------------------
 @app.route("/records")
 @login_required
 def records():
@@ -311,14 +322,46 @@ def records():
         rows = c.fetchall()
     return render_template("records.html", rows=rows)
 
+@app.route("/add_record", methods=["GET", "POST"], endpoint="add_record")
+@login_required
+def add_record():
+    # 利用者一覧（プルダウン用）
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, name FROM users ORDER BY id")
+        users = c.fetchall()
+
+    if request.method == "POST":
+        user_id    = request.form.get("user_id")
+        meal       = request.form.get("meal")
+        medication = request.form.get("medication")
+        toilet     = request.form.get("toilet")
+        condition  = request.form.get("condition")
+        memo       = request.form.get("memo")
+        staff_name = session.get("staff_name")
+
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("""
+                INSERT INTO records(user_id, meal, medication, toilet, condition, memo, staff_name)
+                VALUES(?,?,?,?,?,?,?)
+            """, (user_id, meal, medication, toilet, condition, memo, staff_name))
+            conn.commit()
+
+        flash(_("記録を保存しました。"))
+        return redirect(url_for("records"))
+
+    return render_template("add_record.html", users=users)
+
+# -------------------- 引継ぎ --------------------
 @app.route("/handover", methods=["GET", "POST"])
 @login_required
 def handover():
     if request.method == "POST":
         h_date = request.form.get("h_date") or date.today().isoformat()
-        shift = request.form.get("shift") or "day"
-        note = request.form.get("note") or ""
-        staff = session.get("staff_name") or ""
+        shift  = request.form.get("shift") or "day"
+        note   = request.form.get("note") or ""
+        staff  = session.get("staff_name") or ""
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("INSERT INTO handover(h_date, shift, note, staff) VALUES(?,?,?,?)",
@@ -338,7 +381,8 @@ def handover():
 def favicon():
     ico = os.path.join(app.root_path, "static", "favicon.ico")
     if os.path.exists(ico):
-        return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
+        return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico",
+                                   mimetype="image/vnd.microsoft.icon")
     return ("", 204)
 
 @app.errorhandler(404)
