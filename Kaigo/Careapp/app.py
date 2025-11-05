@@ -11,7 +11,7 @@ DB_PATH = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(__file__), "
 app = Flask(__name__)
 app.secret_key = APP_SECRET
 
-# -------------------- Babel設定（言語選択のみ） --------------------
+# -------------------- Babel設定 --------------------
 app.config["BABEL_DEFAULT_LOCALE"] = "ja"
 app.config["BABEL_DEFAULT_TIMEZONE"] = "Asia/Tokyo"
 app.config["LANGUAGES"] = ["ja", "en"]
@@ -55,26 +55,8 @@ def _t(key, **kwargs):
             pass
     return s
 
-# Python側でも使えるように
 _ = _t
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
-
-# -------------------- i18n再読み込み・デバッグ --------------------
-@app.route("/i18n/reload")
-def i18n_reload():
-    global TRANSLATIONS
-    TRANSLATIONS = _load_json_translations()
-    flash(_("言語を切り替えました。"))
-    return redirect(request.referrer or url_for("home"))
-
-@app.route("/i18n/debug")
-def i18n_debug():
-    lang = get_locale()
-    return {
-        "current_lang": lang,
-        "keys_loaded": len(TRANSLATIONS.get(lang, {})),
-        "example": TRANSLATIONS.get(lang, {}).get("デジタル介護日誌", None)
-    }
 
 # -------------------- DB --------------------
 def get_connection():
@@ -100,8 +82,10 @@ def init_db():
         c.execute("""
         CREATE TABLE IF NOT EXISTS staff(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE, password TEXT,
-          role TEXT, login_token TEXT
+          name TEXT,
+          password TEXT,
+          role TEXT,
+          login_token TEXT
         )""")
         c.execute("""
         CREATE TABLE IF NOT EXISTS handover(
@@ -220,17 +204,18 @@ def delete_staff(sid):
 @admin_required
 def generate_qr():
     if request.method == "POST":
-        name = request.form.get("name")
-        role = request.form.get("role") or "caregiver"
+        name = (request.form.get("name") or "").strip()
+        role = (request.form.get("role") or "caregiver").strip()
         token = secrets.token_hex(8)
+
+        # UNIQUE制約なしでアップサート
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("""
-                INSERT INTO staff(name, role, login_token)
-                VALUES(?,?,?)
-                ON CONFLICT(name) DO UPDATE SET role=excluded.role, login_token=excluded.login_token
-            """, (name, role, token))
+            c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?", (role, token, name))
+            if c.rowcount == 0:
+                c.execute("INSERT INTO staff(name, role, login_token) VALUES(?,?,?)", (name, role, token))
             conn.commit()
+
         host = request.host.split(":")[0]
         login_url = f"http://{host}:5000/login/{token}"
         img = qrcode.make(login_url)
@@ -238,6 +223,7 @@ def generate_qr():
         img.save(buf, format="PNG")
         buf.seek(0)
         return send_file(buf, mimetype="image/png")
+
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM staff ORDER BY id")
