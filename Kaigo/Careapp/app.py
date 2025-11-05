@@ -35,7 +35,8 @@ def _load_json_translations():
             with open(path, encoding="utf-8") as f:
                 try:
                     data[lang] = json.load(f)
-                except Exception:
+                except Exception as e:
+                    print(f"[i18n] Failed to load {lang}.json:", e)
                     data[lang] = {}
         else:
             data[lang] = {}
@@ -44,7 +45,7 @@ def _load_json_translations():
 TRANSLATIONS = _load_json_translations()
 
 def _t(key, **kwargs):
-    """JSON辞書から翻訳を返す（Jinja/ Python両方で使用）"""
+    """JSON辞書から翻訳を返す（Jinja/Python両対応）"""
     lang = get_locale()
     s = TRANSLATIONS.get(lang, {}).get(key, key)
     if kwargs:
@@ -54,17 +55,46 @@ def _t(key, **kwargs):
             pass
     return s
 
-# ★ 重要：Python側でも flash(_("…")) が使えるように、_ をバインド
+# Python側でも使えるように
 _ = _t
 
-# Jinjaで {{ _("...") }} / {{ get_locale() }} を使えるようにする
+# Jinjaで {{ _("...") }} を使用可能にする
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
-# -------------------- DB接続 --------------------
+# -------------------- i18n デバッグ＆再読み込み --------------------
+@app.route("/i18n/reload")
+def i18n_reload():
+    global TRANSLATIONS
+    TRANSLATIONS = _load_json_translations()
+    flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.route("/i18n/debug")
+def i18n_debug():
+    lang = get_locale()
+    must_keys = [
+        "デジタル介護日誌","メインメニュー","利用者一覧","登録されている利用者を確認",
+        "記録入力","食事・服薬・排泄・体調など","記録一覧","これまでの記録を閲覧",
+        "利用者登録","管理者のみ","設定","スタッフ・QR発行など",
+        "引継ぎボード","当日の申し送り・シフト別","ログインが必要です。","ログアウト",
+        "言語を切り替えました。"
+    ]
+    miss = [k for k in must_keys if TRANSLATIONS.get(lang, {}).get(k) is None]
+    return {
+        "current_lang": lang,
+        "translation_count": len(TRANSLATIONS.get(lang, {})),
+        "missing_keys": miss
+    }
+
+@app.route("/i18n/show/<key>")
+def i18n_show(key):
+    k = request.args.get("k") or key
+    return {"lang": get_locale(), "key": k, "value": _t(k)}
+
+# -------------------- DB --------------------
 def get_connection():
     return sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
 
-# -------------------- テーブル初期化 --------------------
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
@@ -100,23 +130,23 @@ def init_db():
 if not os.path.exists(DB_PATH):
     init_db()
 
-# -------------------- 認可デコレータ --------------------
+# -------------------- デコレータ --------------------
 def login_required(f):
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def w(*a, **kw):
         if "staff_name" not in session:
             flash(_("ログインが必要です。"))
             return redirect(url_for("staff_login"))
-        return f(*args, **kwargs)
-    return wrapper
+        return f(*a, **kw)
+    return w
 
 def admin_required(f):
     @wraps(f)
-    def wrapper(*args, **kwargs):
+    def w(*a, **kw):
         if session.get("staff_role") != "admin":
             return _("管理者権限が必要です。"), 403
-        return f(*args, **kwargs)
-    return wrapper
+        return f(*a, **kw)
+    return w
 
 # -------------------- 言語切替 --------------------
 @app.route("/set_language/<lang>")
@@ -163,8 +193,7 @@ def staff_login():
             c.execute("SELECT name, role FROM staff WHERE name=? AND password=?", (name, password))
             row = c.fetchone()
         if row:
-            session["staff_name"] = row[0]
-            session["staff_role"] = row[1]
+            session["staff_name"], session["staff_role"] = row
             flash(_("%(n)s さんでログインしました。", n=row[0]))
             return redirect(url_for("home"))
         flash(_("名前またはパスワードが間違っています。"))
@@ -182,7 +211,7 @@ def logout():
 def admin_page():
     return render_template("admin.html")
 
-# -------------------- スタッフ一覧 --------------------
+# -------------------- スタッフ一覧・QR --------------------
 @app.route("/staff_list")
 @admin_required
 def staff_list():
@@ -192,7 +221,6 @@ def staff_list():
         staff = c.fetchall()
     return render_template("staff_list.html", staff_list=staff)
 
-# -------------------- QR関連 --------------------
 @app.route("/generate_qr", methods=["GET", "POST"])
 @admin_required
 def generate_qr():
@@ -219,7 +247,7 @@ def generate_qr():
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM staff ORDER BY id")
-        names = [row[0] for row in c.fetchall()]
+        names = [r[0] for r in c.fetchall()]
     return render_template("generate_qr.html", names=names)
 
 @app.route("/qr/<token>.png")
@@ -241,12 +269,11 @@ def login_by_qr(token):
         row = c.fetchone()
     if not row:
         return _("無効なQRコードです。"), 403
-    session["staff_name"] = row[0]
-    session["staff_role"] = row[1]
+    session["staff_name"], session["staff_role"] = row
     flash(_("%(n)s さんでログインしました。", n=row[0]))
     return redirect(url_for("home"))
 
-# -------------------- 利用者管理 --------------------
+# -------------------- 利用者・記録・引継ぎ --------------------
 @app.route("/users")
 @admin_required
 def users_page():
@@ -260,11 +287,8 @@ def users_page():
 @admin_required
 def add_user():
     if request.method == "POST":
-        name = request.form.get("name")
-        age = request.form.get("age")
-        gender = request.form.get("gender")
-        room = request.form.get("room_number")
-        notes = request.form.get("notes")
+        name, age, gender = request.form.get("name"), request.form.get("age"), request.form.get("gender")
+        room, notes = request.form.get("room_number"), request.form.get("notes")
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("INSERT INTO users(name, age, gender, room_number, notes) VALUES (?,?,?,?,?)",
@@ -274,17 +298,6 @@ def add_user():
         return redirect(url_for("users_page"))
     return render_template("add_user.html")
 
-@app.route("/delete_user/<int:user_id>")
-@admin_required
-def delete_user(user_id):
-    with get_connection() as conn:
-        c = conn.cursor()
-        c.execute("DELETE FROM users WHERE id=?", (user_id,))
-        conn.commit()
-    flash(_("利用者を削除しました。"))
-    return redirect(url_for("users_page"))
-
-# -------------------- 記録 --------------------
 @app.route("/records")
 @login_required
 def records():
@@ -298,33 +311,6 @@ def records():
         rows = c.fetchall()
     return render_template("records.html", rows=rows)
 
-@app.route("/add_record", methods=["GET", "POST"])
-@login_required
-def add_record():
-    with get_connection() as conn:
-        c = conn.cursor()
-        c.execute("SELECT id, name FROM users ORDER BY id")
-        users = c.fetchall()
-    if request.method == "POST":
-        user_id = request.form.get("user_id")
-        meal = request.form.get("meal")
-        medication = request.form.get("medication")
-        toilet = request.form.get("toilet")
-        condition = request.form.get("condition")
-        memo = request.form.get("memo")
-        staff_name = session.get("staff_name")
-        with get_connection() as conn:
-            c = conn.cursor()
-            c.execute("""
-                INSERT INTO records(user_id, meal, medication, toilet, condition, memo, staff_name)
-                VALUES(?,?,?,?,?,?,?)
-            """, (user_id, meal, medication, toilet, condition, memo, staff_name))
-            conn.commit()
-        flash(_("記録を保存しました。"))
-        return redirect(url_for("records"))
-    return render_template("add_record.html", users=users)
-
-# -------------------- 引継ぎ --------------------
 @app.route("/handover", methods=["GET", "POST"])
 @login_required
 def handover():
@@ -350,9 +336,8 @@ def handover():
 # -------------------- favicon / 404 --------------------
 @app.route("/favicon.ico")
 def favicon():
-    # static/favicon.ico があれば返す。無ければ 204（空）でOKにする
-    ico_path = os.path.join(app.root_path, "static", "favicon.ico")
-    if os.path.exists(ico_path):
+    ico = os.path.join(app.root_path, "static", "favicon.ico")
+    if os.path.exists(ico):
         return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
     return ("", 204)
 
