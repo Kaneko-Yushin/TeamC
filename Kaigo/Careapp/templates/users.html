@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% macro core() %}
 <div class="container my-4">
   <h2 class="mb-3">利用者一覧</h2>
 
@@ -31,7 +31,8 @@
             <td>{{ u.room_number }}</td>
             <td>{{ u.notes }}</td>
             <td>
-              <a href="{{ url_for('delete_user', user_id=u.id) }}" class="btn btn-sm btn-outline-danger"
+              <a href="{{ url_for('delete_user', user_id=u.id) }}"
+                 class="btn btn-sm btn-outline-danger"
                  onclick="return confirm('削除してよろしいですか？');">削除</a>
             </td>
           </tr>
@@ -49,4 +50,10 @@
     <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
   </div>
 </div>
-{% endblock %}
+{% endmacro %}
+
+{% block content %}{{ core() }}{% endblock %}
+{% block body %}{{ core() }}{% endblock %}
+{% block main %}{{ core() }}{% endblock %}
+{% block page %}{{ core() }}{% endblock %}
+{% block container %}{{ core() }}{% endblock %}

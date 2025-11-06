@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% macro core() %}
 <div class="container my-4">
   <h2 class="mb-3">利用者登録</h2>
 
@@ -39,4 +39,10 @@
     <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
   </div>
 </div>
-{% endblock %}
+{% endmacro %}
+
+{% block content %}{{ core() }}{% endblock %}
+{% block body %}{{ core() }}{% endblock %}
+{% block main %}{{ core() }}{% endblock %}
+{% block page %}{{ core() }}{% endblock %}
+{% block container %}{{ core() }}{% endblock %}
