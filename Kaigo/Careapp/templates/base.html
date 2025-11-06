@@ -16,13 +16,8 @@
       .menu-emoji { font-size:56px; line-height:1; margin-bottom:12px; }
       .menu-title { font-weight:800; font-size:22px; color:#0f5132; margin-bottom:0; }
       .disabled { pointer-events:none; opacity:.5; }
-      /* Google翻訳ウィジェットの微調整 */
       #google_translate_element { line-height:1; }
-      .goog-te-gadget { font-size:0; } /* デフォルトの「Powered by」を抑制（表示は残る） */
       .goog-te-combo { font-size:12px; }
-      @media (max-width: 575.98px) {
-        .header-tools { gap:.5rem !important; }
-      }
     </style>
     {% block head_extra %}{% endblock %}
   </head>
@@ -32,15 +27,7 @@
       <div class="container d-flex align-items-center justify-content-between">
         <div class="fw-bold"><a href="{{ url_for('home') }}">{{ _("デジタル介護日誌") }}</a></div>
         <div class="d-flex align-items-center gap-3 header-tools">
-          <!-- 言語切替（アプリ内i18n） -->
-          <div class="small d-flex align-items-center gap-2">
-            <span>{{ _("言語") }}:</span>
-            <a href="{{ url_for('set_language', lang='ja') }}">日本語</a>
-            <span class="mx-1">/</span>
-            <a href="{{ url_for('set_language', lang='en') }}">English</a>
-          </div>
-
-          <!-- Google ページ翻訳（使える環境ならドロップダウン表示） -->
+          <!-- Google ページ翻訳 -->
           <div id="google_translate_element"></div>
 
           {% if session.get('staff_name') %}
