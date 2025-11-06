@@ -16,7 +16,7 @@
     </div>
     <div class="col-md-6">
       <label class="form-label">内容</label>
-      <input name="note" class="form-control" placeholder="申し送り内容を入力">
+      <input name="note" class="form-control" placeholder="申し送り内容を入力" required>
     </div>
     <div class="col-md-2 d-grid">
       <label class="form-label invisible">送信</label>
@@ -56,7 +56,7 @@
             </form>
           </td>
         </tr>
-        {% endfor %}  {# ← ここは endfor！ endblock と間違えない #}
+        {% endfor %}  {# ← endfor。endblockと取り違えない！ #}
       </tbody>
     </table>
   </div>
