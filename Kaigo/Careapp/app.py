@@ -11,7 +11,7 @@ DB_PATH = os.environ.get("DB_PATH") or os.path.join(os.path.dirname(__file__), "
 app = Flask(__name__)
 app.secret_key = APP_SECRET
 
-# -------------------- Babel設定 --------------------
+# -------------------- Babel設定（言語選択のみ） --------------------
 app.config["BABEL_DEFAULT_LOCALE"] = "ja"
 app.config["BABEL_DEFAULT_TIMEZONE"] = "Asia/Tokyo"
 app.config["LANGUAGES"] = ["ja", "en"]
@@ -55,8 +55,26 @@ def _t(key, **kwargs):
             pass
     return s
 
+# Python側でも使えるように
 _ = _t
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
+
+# -------------------- i18n再読み込み・デバッグ --------------------
+@app.route("/i18n/reload")
+def i18n_reload():
+    global TRANSLATIONS
+    TRANSLATIONS = _load_json_translations()
+    flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.route("/i18n/debug")
+def i18n_debug():
+    lang = get_locale()
+    return {
+        "current_lang": lang,
+        "keys_loaded": len(TRANSLATIONS.get(lang, {})),
+        "example": TRANSLATIONS.get(lang, {}).get("デジタル介護日誌", None)
+    }
 
 # -------------------- DB --------------------
 def get_connection():
@@ -208,7 +226,7 @@ def generate_qr():
         role = (request.form.get("role") or "caregiver").strip()
         token = secrets.token_hex(8)
 
-        # UNIQUE制約なしでアップサート
+        # UNIQUE制約に依存しないアップサート
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?", (role, token, name))

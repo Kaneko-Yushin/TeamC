@@ -8,14 +8,13 @@
       <tr>
         <th>ID</th>
         <th>{{ _('スタッフ') }}</th>
-        <th>Role</th>
+        <th>{{ _('役割') }}</th>
         <th>QR</th>
-        <th>Op</th>
+        <th>{{ _('操作') }}</th>
       </tr>
     </thead>
     <tbody>
       {% for s in staff_list %}
-      {# s = (id, name, password, role, login_token) #}
       <tr>
         <td>{{ s[0] }}</td>
         <td>{{ s[1] }}</td>
@@ -30,7 +29,7 @@
         <td>
           <a class="btn btn-sm btn-danger"
              href="{{ url_for('delete_staff', sid=s[0]) }}"
-             onclick="return confirm('{{ ('本当に削除しますか？') }}')">
+             onclick="return confirm('{{ _('本当に削除しますか？') }}');">
             {{ _('削除') }}
           </a>
         </td>
