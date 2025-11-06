@@ -27,9 +27,10 @@
           {% endif %}
         </td>
         <td>
+          <!-- 削除ボタン：data-msg属性を使用 -->
           <a class="btn btn-sm btn-danger"
              href="{{ url_for('delete_staff', sid=s[0]) }}"
-             onclick="return confirm('{{ _('本当に削除しますか？') }}');">
+             data-msg="{{ _('本当に削除しますか？') }}">
             {{ _('削除') }}
           </a>
         </td>
@@ -43,4 +44,17 @@
     <a class="btn btn-outline-secondary" href="{{ url_for('admin_page') }}">{{ _('戻る') }}</a>
   </div>
 </div>
+
+<!-- JSで削除確認ダイアログを一括処理（赤線出ない） -->
+<script>
+  document.addEventListener('click', function (ev) {
+    const a = ev.target.closest('a[data-msg]');
+    if (!a) return;
+    const msg = a.dataset.msg;
+    if (!confirm(msg)) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  });
+</script>
 {% endblock %}
