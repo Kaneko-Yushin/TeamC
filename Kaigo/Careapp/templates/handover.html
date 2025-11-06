@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
-{# base.html のブロック名が content の場合は content、body の場合は body に変更してOK #}
-{% block content %}
+{% macro handover_core() %}
 <div class="container my-4">
   <h2 class="mb-3">引継ぎ / 申し送り</h2>
 
-  <!-- 引継ぎ追加フォーム -->
+  <!-- 追加フォーム -->
   <form method="post" action="{{ url_for('handover') }}" class="row g-2 mb-4">
     <div class="col-md-2">
       <label class="form-label">日付</label>
@@ -29,7 +28,7 @@
     </div>
   </form>
 
-  <!-- 引継ぎ一覧 -->
+  <!-- 一覧 -->
   <div class="table-responsive">
     <table class="table table-sm table-striped align-middle">
       <thead class="table-success">
@@ -61,4 +60,9 @@
     </table>
   </div>
 </div>
-{% endblock %}
+{% endmacro %}
+
+{# base.html のどれでも拾えるように複数ブロックを用意 #}
+{% block content %}{{ handover_core() }}{% endblock %}
+{% block body %}{{ handover_core() }}{% endblock %}
+{% block main %}{{ handover_core() }}{% endblock %}

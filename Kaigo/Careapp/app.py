@@ -9,9 +9,9 @@ from datetime import date, datetime
 from flask_babel import Babel
 
 # ==================== 基本設定 ====================
-APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
 APP_ROOT = os.path.dirname(__file__)
 DB_PATH = os.environ.get("DB_PATH") or os.path.join(APP_ROOT, "care.db")
+APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
 
 app = Flask(__name__)
 app.secret_key = APP_SECRET
@@ -32,27 +32,23 @@ def get_locale():
 babel.init_app(app, locale_selector=get_locale)
 
 def _load_json_translations():
-    """
-    優先: <app root>/translations/<lang>.json
-    予備: <app root>/<lang>.json
-    無ければ空dict
-    """
-    base_dir = APP_ROOT
+    """translations/<lang>.json または <app>/<lang>.json を読む"""
+    base = APP_ROOT
     candidates = [
-        lambda lang: os.path.join(base_dir, "translations", f"{lang}.json"),
-        lambda lang: os.path.join(base_dir, f"{lang}.json"),
+        lambda lang: os.path.join(base, "translations", f"{lang}.json"),
+        lambda lang: os.path.join(base, f"{lang}.json"),
     ]
     data = {}
     for lang in app.config["LANGUAGES"]:
         loaded = {}
-        for pathfn in candidates:
-            path = pathfn(lang)
-            if os.path.exists(path):
+        for fn in candidates:
+            p = fn(lang)
+            if os.path.exists(p):
                 try:
-                    with open(path, encoding="utf-8") as f:
+                    with open(p, encoding="utf-8") as f:
                         loaded = json.load(f)
                 except Exception as e:
-                    print(f"[i18n] Failed to load {path}: {e}")
+                    print(f"[i18n] load fail {p}: {e}")
                     loaded = {}
                 break
         data[lang] = loaded
@@ -61,47 +57,57 @@ def _load_json_translations():
 TRANSLATIONS = _load_json_translations()
 
 def _t(key, **kwargs):
-    """JSON辞書から翻訳を返す（キー未登録ならキー名をそのまま返す）"""
-    lang = get_locale()
-    s = TRANSLATIONS.get(lang, {}).get(key, key)
+    s = TRANSLATIONS.get(get_locale(), {}).get(key, key)
     if kwargs:
-        try:
-            s = s % kwargs
-        except Exception:
-            pass
+        try: s = s % kwargs
+        except Exception: pass
     return s
 
 _ = _t
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
-# ==================== DB ====================
+@app.route("/set_language/<lang>")
+def set_language(lang):
+    lang = (lang or "ja").lower()
+    if lang in app.config["LANGUAGES"]:
+        session["lang"] = lang
+        flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.route("/i18n/reload")
+def i18n_reload():
+    global TRANSLATIONS
+    TRANSLATIONS = _load_json_translations()
+    flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.route("/i18n/debug")
+def i18n_debug():
+    lang = get_locale()
+    return {"current_lang": lang, "keys_loaded": len(TRANSLATIONS.get(lang, {}))}
+
+# ==================== DB 基盤 ====================
 def dict_factory(cursor, row):
     return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=10, check_same_thread=False)
     conn.row_factory = dict_factory
-    # SQLite 推奨設定
-    conn.execute("PRAGMA foreign_keys = ON;")
-    conn.execute("PRAGMA journal_mode = WAL;")
-    conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
     return conn
 
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
-        # users: 利用者
         c.execute("""
         CREATE TABLE IF NOT EXISTS users(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          age INTEGER,
-          gender TEXT,
-          room_number TEXT,
-          notes TEXT
+          name TEXT NOT NULL, age INTEGER, gender TEXT,
+          room_number TEXT, notes TEXT
         );
         """)
-        # staff: スタッフ（name は一意）
         c.execute("""
         CREATE TABLE IF NOT EXISTS staff(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,7 +117,6 @@ def init_db():
           login_token TEXT
         );
         """)
-        # records: 介護記録（users への外部キー）
         c.execute("""
         CREATE TABLE IF NOT EXISTS records(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -122,38 +127,34 @@ def init_db():
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         );
         """)
-        # handover: 申し送り
         c.execute("""
         CREATE TABLE IF NOT EXISTS handover(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          h_date TEXT NOT NULL,  -- YYYY-MM-DD
-          shift TEXT NOT NULL,   -- day/evening/nightなど
+          h_date TEXT NOT NULL,
+          shift TEXT NOT NULL,
           note TEXT NOT NULL,
           staff TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         """)
-        # よく使う列にインデックス
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_user_id ON records(user_id);")
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC);")
         c.execute("CREATE INDEX IF NOT EXISTS idx_handover_date ON handover(h_date, shift);")
         conn.commit()
 
-    # 最低限の初期データ（adminが無ければ1人作る）
+    # 最低限の管理者
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM staff WHERE role='admin';")
         if (c.fetchone()["cnt"] or 0) == 0:
-            # デモ管理者: admin / admin
-            c.execute("INSERT OR IGNORE INTO staff(name, password, role) VALUES (?,?,?)",
-                      ("admin", "admin", "admin"))
+            c.execute("INSERT OR IGNORE INTO staff(name,password,role) VALUES(?,?,?)",
+                      ("admin","admin","admin"))
             conn.commit()
 
 if not os.path.exists(DB_PATH):
     init_db()
 else:
-    # 既存DBでも足りないテーブル/インデックスを補う
-    init_db()
+    init_db()  # 既存DBでも不足テーブル/インデックスを補完
 
 # ==================== 認可 ====================
 def login_required(f):
@@ -173,42 +174,13 @@ def admin_required(f):
         return f(*a, **kw)
     return w
 
-# ==================== 言語切替 & i18n 補助 ====================
-@app.route("/set_language/<lang>")
-def set_language(lang):
-    lang = (lang or "ja").lower()
-    if lang in app.config["LANGUAGES"]:
-        session["lang"] = lang
-        flash(_("言語を切り替えました。"))
-    return redirect(request.referrer or url_for("home"))
-
-@app.route("/i18n/reload")
-def i18n_reload():
-    global TRANSLATIONS
-    TRANSLATIONS = _load_json_translations()
-    flash(_("言語を切り替えました。"))
-    return redirect(request.referrer or url_for("home"))
-
-@app.route("/i18n/debug")
-def i18n_debug():
-    lang = get_locale()
-    return {
-        "current_lang": lang,
-        "keys_loaded": len(TRANSLATIONS.get(lang, {})),
-        "example": TRANSLATIONS.get(lang, {}).get("デジタル介護日誌", None)
-    }
-
-# ==================== 共通ヘルパ ====================
+# ==================== 共通ユーティリティ ====================
 def paginate(total: int, page: int, per_page: int):
     pages = max(1, math.ceil(total / per_page))
     page = max(1, min(page, pages))
     return {
-        "page": page,
-        "per_page": per_page,
-        "pages": pages,
-        "total": total,
-        "has_prev": page > 1,
-        "has_next": page < pages,
+        "page": page, "per_page": per_page, "pages": pages, "total": total,
+        "has_prev": page > 1, "has_next": page < pages,
         "prev_page": page - 1 if page > 1 else None,
         "next_page": page + 1 if page < pages else None,
     }
@@ -216,11 +188,9 @@ def paginate(total: int, page: int, per_page: int):
 # ==================== ホーム ====================
 @app.route("/")
 def home():
-    # テンプレがあれば使う
     try:
         return render_template("home.html")
     except Exception:
-        # テンプレがまだ無い場合の簡易トップ
         return (
             "<h1>デジタル介護日誌</h1>"
             "<p><a href='/staff_login'>スタッフログイン</a> | "
@@ -230,7 +200,7 @@ def home():
         )
 
 # ==================== スタッフ登録・ログイン ====================
-@app.route("/staff_register", methods=["GET", "POST"])
+@app.route("/staff_register", methods=["GET","POST"])
 def staff_register():
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
@@ -242,10 +212,8 @@ def staff_register():
         with get_connection() as conn:
             c = conn.cursor()
             try:
-                c.execute(
-                    "INSERT INTO staff(name, password, role) VALUES (?,?,?)",
-                    (name, password, role)
-                )
+                c.execute("INSERT INTO staff(name,password,role) VALUES (?,?,?)",
+                          (name,password,role))
                 conn.commit()
                 flash(_("登録完了。ログインしてください。"))
                 return redirect(url_for("staff_login"))
@@ -253,17 +221,15 @@ def staff_register():
                 flash(_("同名のスタッフがすでに存在します。"))
     return render_template("staff_register.html")
 
-@app.route("/staff_login", methods=["GET", "POST"])
+@app.route("/staff_login", methods=["GET","POST"])
 def staff_login():
     if request.method == "POST":
         name = request.form.get("name")
         password = request.form.get("password")
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute(
-                "SELECT name, role FROM staff WHERE name=? AND password=?",
-                (name, password)
-            )
+            c.execute("SELECT name, role FROM staff WHERE name=? AND password=?",
+                      (name,password))
             row = c.fetchone()
         if row:
             session["staff_name"], session["staff_role"] = row["name"], row["role"]
@@ -293,7 +259,7 @@ def staff_list():
         staff = c.fetchall()
     return render_template("staff_list.html", staff_list=staff)
 
-@app.route("/delete_staff/<int:sid>", methods=["POST", "GET"], endpoint="delete_staff")
+@app.route("/delete_staff/<int:sid>", methods=["POST","GET"], endpoint="delete_staff")
 @admin_required
 def delete_staff(sid):
     with get_connection() as conn:
@@ -303,28 +269,25 @@ def delete_staff(sid):
     flash(_("スタッフを削除しました。"))
     return redirect(url_for("staff_list"))
 
-@app.route("/generate_qr", methods=["GET", "POST"])
+@app.route("/generate_qr", methods=["GET","POST"])
 @admin_required
 def generate_qr():
     if request.method == "POST":
         name = (request.form.get("name") or "").strip()
         role = (request.form.get("role") or "caregiver").strip()
         token = secrets.token_hex(8)
-
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?", (role, token, name))
+            c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?",
+                      (role, token, name))
             if c.rowcount == 0:
                 c.execute("INSERT INTO staff(name, role, password, login_token) VALUES(?,?,?,?)",
                           (name, role, "pass", token))
             conn.commit()
-
         host = request.host.split(":")[0]
         login_url = f"http://{host}:5000/login/{token}"
         img = qrcode.make(login_url)
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        buf.seek(0)
+        buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
         return send_file(buf, mimetype="image/png")
 
     with get_connection() as conn:
@@ -339,9 +302,7 @@ def qr_png(token):
     host = request.host.split(":")[0]
     login_url = f"http://{host}:5000/login/{token}"
     img = qrcode.make(login_url)
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    buf.seek(0)
+    buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
     return send_file(buf, mimetype="image/png")
 
 @app.route("/login/<token>")
@@ -366,14 +327,14 @@ def users_page():
         users = c.fetchall()
     return render_template("users.html", users=users)
 
-@app.route("/add_user", methods=["GET", "POST"])
+@app.route("/add_user", methods=["GET","POST"])
 @admin_required
 def add_user():
     if request.method == "POST":
-        name = request.form.get("name")
-        age = request.form.get("age")
-        gender = request.form.get("gender")
-        room = request.form.get("room_number")
+        name  = request.form.get("name")
+        age   = request.form.get("age")
+        gender= request.form.get("gender")
+        room  = request.form.get("room_number")
         notes = request.form.get("notes")
         with get_connection() as conn:
             c = conn.cursor()
@@ -402,14 +363,12 @@ def delete_user(user_id):
 def records():
     page = int(request.args.get("page", 1))
     per_page = max(1, min(int(request.args.get("per_page", 20)), 100))
-
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM records;")
         total = c.fetchone()["cnt"]
         pg = paginate(total, page, per_page)
         offset = (pg["page"] - 1) * pg["per_page"]
-
         c.execute("""
         SELECT r.id, u.name AS user_name, r.meal, r.medication, r.toilet, r.condition,
                r.memo, r.staff_name, r.created_at
@@ -418,13 +377,11 @@ def records():
          LIMIT ? OFFSET ?
         """, (pg["per_page"], offset))
         rows = c.fetchall()
-
     return render_template("records.html", rows=rows, pg=pg)
 
 @app.route("/records/export.csv")
 @admin_required
 def export_records_csv():
-    # CSVエクスポート
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("""
@@ -434,22 +391,20 @@ def export_records_csv():
          ORDER BY r.id DESC
         """)
         rows = c.fetchall()
-
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=[
         "id","user_name","meal","medication","toilet","condition","memo","staff_name","created_at"
     ])
     writer.writeheader()
-    for r in rows:
-        writer.writerow(r)
+    for r in rows: writer.writerow(r)
     mem = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return send_file(mem, as_attachment=True, download_name=f"records_{ts}.csv", mimetype="text/csv")
+    return send_file(mem, as_attachment=True,
+                     download_name=f"records_{ts}.csv", mimetype="text/csv")
 
 @app.route("/api/records")
 @login_required
 def api_records():
-    # SPAや外部から読むためのJSON API
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("""
@@ -461,7 +416,7 @@ def api_records():
         rows = c.fetchall()
     return jsonify({"records": rows})
 
-@app.route("/add_record", methods=["GET", "POST"], endpoint="add_record")
+@app.route("/add_record", methods=["GET","POST"], endpoint="add_record")
 @login_required
 def add_record():
     with get_connection() as conn:
@@ -469,12 +424,12 @@ def add_record():
         c.execute("SELECT id, name FROM users ORDER BY id")
         users = c.fetchall()
     if request.method == "POST":
-        user_id = request.form.get("user_id")
-        meal = request.form.get("meal")
+        user_id    = request.form.get("user_id")
+        meal       = request.form.get("meal")
         medication = request.form.get("medication")
-        toilet = request.form.get("toilet")
-        condition = request.form.get("condition")
-        memo = request.form.get("memo")
+        toilet     = request.form.get("toilet")
+        condition  = request.form.get("condition")
+        memo       = request.form.get("memo")
         staff_name = session.get("staff_name")
         with get_connection() as conn:
             c = conn.cursor()
@@ -488,44 +443,40 @@ def add_record():
     return render_template("add_record.html", users=users)
 
 # ==================== 引継ぎ（申し送り） ====================
-@app.route("/handover", methods=["GET", "POST"])
+@app.route("/handover", methods=["GET","POST"])
 @login_required
 def handover():
     if request.method == "POST":
         h_date = request.form.get("h_date") or date.today().isoformat()
-        shift = request.form.get("shift") or "day"
-        note = request.form.get("note") or ""
-        staff = session.get("staff_name") or ""
+        shift  = request.form.get("shift") or "day"
+        note   = request.form.get("note") or ""
+        staff  = session.get("staff_name") or ""
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute(
-                "INSERT INTO handover(h_date, shift, note, staff) VALUES(?,?,?,?)",
-                (h_date, shift, note, staff)
-            )
+            c.execute("INSERT INTO handover(h_date, shift, note, staff) VALUES(?,?,?,?)",
+                      (h_date, shift, note, staff))
             conn.commit()
         flash(_("引継ぎを追加しました。"))
         return redirect(url_for("handover"))
 
-    # 日付フィルタ + ページング
     h_date = request.args.get("date") or date.today().isoformat()
     page = int(request.args.get("page", 1))
     per_page = max(1, min(int(request.args.get("per_page", 50)), 200))
 
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT COUNT(*) AS cnt FROM handover WHERE h_date = ?", (h_date,))
+        c.execute("SELECT COUNT(*) AS cnt FROM handover WHERE h_date=?", (h_date,))
         total = c.fetchone()["cnt"]
         pg = paginate(total, page, per_page)
         offset = (pg["page"] - 1) * pg["per_page"]
-
         c.execute("""
         SELECT id, h_date, shift, note, staff, created_at
           FROM handover
          WHERE h_date = ?
          ORDER BY id DESC
-         LIMIT ? OFFSET ?""", (h_date, pg["per_page"], offset))
+         LIMIT ? OFFSET ?
+        """, (h_date, pg["per_page"], offset))
         rows = c.fetchall()
-
     return render_template("handover.html", rows=rows, today=h_date, pg=pg)
 
 @app.route("/api/handover")
@@ -544,20 +495,31 @@ def api_handover():
         rows = c.fetchall()
     return jsonify({"handover": rows})
 
+# 生HTMLで中身だけ確認したい時に使う簡易デバッグ（必要なければ消してOK）
+@app.get("/handover/plain")
+@login_required
+def handover_plain():
+    with get_connection() as conn:
+        c = conn.cursor()
+        today = date.today().isoformat()
+        c.execute("SELECT id,h_date,shift,note,staff,created_at FROM handover WHERE h_date=? ORDER BY id DESC",(today,))
+        rows = c.fetchall()
+    items = "".join(f"<li>{r['h_date']} {r['shift']} {r['note']} ({r['staff']})</li>" for r in rows)
+    return f"<h3>/handover/plain</h3><ul>{items or '<li>なし</li>'}</ul>"
+
 # ==================== favicon / 404 / health ====================
 @app.route("/favicon.ico")
 def favicon():
     ico = os.path.join(app.root_path, "static", "favicon.ico")
     if os.path.exists(ico):
         return send_from_directory(os.path.join(app.root_path, "static"), "favicon.ico", mimetype="image/vnd.microsoft.icon")
-    # ない場合は204（以前500になっていた事象の回避）
-    return ("", 204)
+    return ("", 204)  # ないなら204で返す（500回避）
 
 @app.route("/healthz")
 def healthz():
     try:
         with get_connection() as conn:
-            conn.execute("SELECT 1;").fetchone()
+            conn.execute("SELECT 1").fetchone()
         return {"ok": True, "db": "up", "time": datetime.now().isoformat()}
     except Exception as e:
         return {"ok": False, "db": "down", "error": str(e)}, 500
@@ -573,4 +535,3 @@ def not_found(e):
 if __name__ == "__main__":
     # ローカル確認は http://127.0.0.1:5000/
     app.run(host="0.0.0.0", port=5000, debug=True)
-    
