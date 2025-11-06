@@ -28,18 +28,30 @@ babel.init_app(app, locale_selector=get_locale)
 
 # -------------------- JSON翻訳辞書 --------------------
 def _load_json_translations():
+    """
+    優先: <app root>/translations/<lang>.json
+    予備: <app root>/<lang>.json
+    いずれも無ければ空dict
+    """
+    base_dir = app.root_path
+    candidates = [
+        lambda lang: os.path.join(base_dir, "translations", f"{lang}.json"),  # translations/ 優先
+        lambda lang: os.path.join(base_dir, f"{lang}.json"),                  # 直下 フォールバック
+    ]
     data = {}
     for lang in app.config["LANGUAGES"]:
-        path = os.path.join(app.root_path, f"{lang}.json")
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
+        loaded = {}
+        for pathfn in candidates:
+            path = pathfn(lang)
+            if os.path.exists(path):
                 try:
-                    data[lang] = json.load(f)
+                    with open(path, encoding="utf-8") as f:
+                        loaded = json.load(f)
                 except Exception as e:
-                    print(f"[i18n] Failed to load {lang}.json:", e)
-                    data[lang] = {}
-        else:
-            data[lang] = {}
+                    print(f"[i18n] Failed to load {path}: {e}")
+                    loaded = {}
+                break
+        data[lang] = loaded
     return data
 
 TRANSLATIONS = _load_json_translations()
@@ -100,8 +112,10 @@ def init_db():
         c.execute("""
         CREATE TABLE IF NOT EXISTS staff(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT UNIQUE, password TEXT,
-          role TEXT, login_token TEXT
+          name TEXT,
+          password TEXT,
+          role TEXT,
+          login_token TEXT
         )""")
         c.execute("""
         CREATE TABLE IF NOT EXISTS handover(
@@ -220,17 +234,17 @@ def delete_staff(sid):
 @admin_required
 def generate_qr():
     if request.method == "POST":
-        name = request.form.get("name")
-        role = request.form.get("role") or "caregiver"
+        name = (request.form.get("name") or "").strip()
+        role = (request.form.get("role") or "caregiver").strip()
         token = secrets.token_hex(8)
+
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("""
-                INSERT INTO staff(name, role, login_token)
-                VALUES(?,?,?)
-                ON CONFLICT(name) DO UPDATE SET role=excluded.role, login_token=excluded.login_token
-            """, (name, role, token))
+            c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?", (role, token, name))
+            if c.rowcount == 0:
+                c.execute("INSERT INTO staff(name, role, login_token) VALUES(?,?,?)", (name, role, token))
             conn.commit()
+
         host = request.host.split(":")[0]
         login_url = f"http://{host}:5000/login/{token}"
         img = qrcode.make(login_url)
@@ -238,6 +252,7 @@ def generate_qr():
         img.save(buf, format="PNG")
         buf.seek(0)
         return send_file(buf, mimetype="image/png")
+
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM staff ORDER BY id")

@@ -16,20 +16,20 @@
       .menu-emoji { font-size:56px; line-height:1; margin-bottom:12px; }
       .menu-title { font-weight:800; font-size:22px; color:#0f5132; margin-bottom:0; }
       .disabled { pointer-events:none; opacity:.5; }
+      #google_translate_element { line-height:1; }
+      .goog-te-combo { font-size:12px; }
     </style>
+    {% block head_extra %}{% endblock %}
   </head>
   <body class="main-wrap">
     <!-- ヘッダー -->
     <div class="app-bar py-2">
       <div class="container d-flex align-items-center justify-content-between">
         <div class="fw-bold"><a href="{{ url_for('home') }}">{{ _("デジタル介護日誌") }}</a></div>
-        <div class="d-flex align-items-center gap-3">
-          <div class="small">
-            <span>Language:</span>
-            <a href="{{ url_for('set_language', lang='ja') }}">日本語</a>
-            <span class="mx-1">/</span>
-            <a href="{{ url_for('set_language', lang='en') }}">English</a>
-          </div>
+        <div class="d-flex align-items-center gap-3 header-tools">
+          <!-- Google ページ翻訳 -->
+          <div id="google_translate_element"></div>
+
           {% if session.get('staff_name') %}
             <span class="small">
               {{ session.get('staff_name') }}{% if session.get('staff_role') == 'admin' %} (admin){% endif %}
@@ -53,5 +53,20 @@
       {% endwith %}
       {% block body %}{% endblock %}
     </div>
+
+    <!-- Google ページ翻訳スクリプト -->
+    <script>
+      function googleTranslateElementInit() {
+        if (window.google && window.google.translate) {
+          new google.translate.TranslateElement(
+            {pageLanguage: 'ja', includedLanguages: 'en,ja'},
+            'google_translate_element'
+          );
+        }
+      }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+    {% block scripts %}{% endblock %}
   </body>
 </html>
