@@ -1,112 +1,52 @@
 {% extends "base.html" %}
-{% block body %}
-  <h2 class="mb-3">{{ _('👥 利用者一覧') }}</h2>
-  <div class="row g-3">
-    {% for u in users %}
-    <div class="col-md-6">
-      <div class="card p-3 shadow-sm">
-        <h5 class="mb-1">{{ u[1] }}</h5>
-        <div class="small text-muted">{{ _('年齢') }}: {{ u[2] or '-' }}</div>
-        <div class="small text-muted">{{ _('性別') }}: {{ u[3] or '-' }}</div>
-        <div class="small text-muted">{{ _('部屋番号') }}: {{ u[4] or '-' }}</div>
-        <div class="small text-muted">{{ _('備考') }}: {{ u[5] or '-' }}</div>
-        <div class="mt-2">
-          <a class="btn btn-sm btn-outline-danger"
-             href="{{ url_for('delete_user', user_id=u[0]) }}"
-             onclick="return confirm('{{ _('本当に削除しますか？') }}');">{{ _('削除') }}</a>
-        </div>
-      </div>
-    </div>
-    {% endfor %}
+
+{% block content %}
+<div class="container my-4">
+  <h2 class="mb-3">利用者一覧</h2>
+
+  <div class="mb-3 text-end">
+    <a href="{{ url_for('add_user') }}" class="btn btn-primary">＋ 新規登録</a>
   </div>
 
-  <div class="text-center mt-4 d-flex gap-2">
-    <a href="{{ url_for('add_user') }}" class="btn btn-success">{{ _('＋ 新しい利用者を登録') }}</a>
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('← ホームに戻る') }}</a>
-  </div>
-{% endblock %}
-=======
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>利用者一覧</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<<<<<<< HEAD
-</head>
-<body class="bg-light">
-<div class="container py-4">
-  {% with msgs = get_flashed_messages() %}
-    {% if msgs %}{% for m in msgs %}<div class="alert alert-info">{{ m }}</div>{% endfor %}{% endif %}
-  {% endwith %}
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>👥 利用者一覧</h3>
-    <div>
-      <a class="btn btn-primary" href="{{ url_for('add_user') }}">＋ 新規登録</a>
-      <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">ホーム</a>
-    </div>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead class="table-success">
+        <tr>
+          <th>ID</th>
+          <th>氏名</th>
+          <th>年齢</th>
+          <th>性別</th>
+          <th>部屋番号</th>
+          <th>備考</th>
+          <th style="width:100px;">操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+          <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.age }}</td>
+            <td>{{ u.gender }}</td>
+            <td>{{ u.room_number }}</td>
+            <td>{{ u.notes }}</td>
+            <td>
+              <a href="{{ url_for('delete_user', user_id=u.id) }}" class="btn btn-sm btn-outline-danger"
+                 onclick="return confirm('削除してよろしいですか？');">削除</a>
+            </td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="7" class="text-center text-muted py-3">登録された利用者がいません。</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
-  <table class="table table-hover bg-white align-middle">
-    <thead>
-      <tr>
-        <th>ID</th><th>氏名</th><th>年齢</th><th>性別</th><th>居室</th><th>備考</th><th>操作</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in users %}
-      <tr>
-        <td>{{ u[0] }}</td>
-        <td>{{ u[1] }}</td>
-        <td>{{ u[2] or '' }}</td>
-        <td>{{ u[3] or '' }}</td>
-        <td>{{ u[4] or '' }}</td>
-        <td>{{ u[5] or '' }}</td>
-        <td>
-          <form class="d-inline" method="post" action="{{ url_for('user_delete', user_id=u[0]) }}"
-                onsubmit="return confirm('削除してよろしいですか？');">
-            <button class="btn btn-sm btn-outline-danger">削除</button>
-          </form>
-        </td>
-      </tr>
-      {% else %}
-        <tr><td colspan="7" class="text-center text-muted">まだ登録がありません</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <!-- 🔙 ホームに戻るボタン -->
+  <div class="text-center mt-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
+  </div>
 </div>
-=======
-  <style>.card { border-radius: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,.06); }</style>
-</head>
-<body class="bg-light">
-  <div class="container py-4">
-    <h2 class="mb-4">👥 利用者一覧</h2>
-    <div class="row g-3">
-      {% for u in users %}
-      <div class="col-md-6 col-lg-4">
-        <div class="card p-3">
-          <h5 class="mb-2">{{ u[1] }}</h5>
-          <div class="text-muted">年齢: {{ u[2] or '-' }} / 性別: {{ u[3] or '-' }}</div>
-          <div class="text-muted">部屋: {{ u[4] or '-' }}</div>
-          <div class="text-muted">備考: {{ u[5] or '-' }}</div>
-          {% if session.get('staff_role') == '管理者' %}
-          <form class="mt-3" method="post" action="{{ url_for('delete_user', user_id=u[0]) }}"
-                onsubmit="return confirm('『{{ u[1] }}』を削除します。よろしいですか？');">
-            <button class="btn btn-outline-danger btn-sm">削除</button>
-          </form>
-          {% endif %}
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="mt-4 d-flex gap-2">
-      {% if session.get('staff_role') == '管理者' %}
-      <a href="{{ url_for('add_user') }}" class="btn btn-success">＋ 新しい利用者を登録</a>
-      {% endif %}
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームへ</a>
-    </div>
-  </div>
->>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
-</body>
-</html>
+{% endblock %}
