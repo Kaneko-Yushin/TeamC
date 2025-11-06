@@ -39,5 +39,20 @@
   "削除": "Delete",
   "本当に削除しますか？": "Are you sure you want to delete?",
   "QR発行": "Issue QR",
-  "戻る": "Back"
+  "戻る": "Back",
+
+  "--- 以下は引継ぎ画面用 ---": "",
+  "引継ぎ": "Handover",
+  "ホームに戻る": "Back to Home",
+  "日付": "Date",
+  "シフト": "Shift",
+  "day": "Day",
+  "evening": "Evening",
+  "night": "Night",
+  "内容": "Note",
+  "担当": "Staff",
+  "申し送り内容を入力": "Enter notes",
+  "担当者は自動で記録されます": "Staff name is recorded automatically",
+  "追加": "Add",
+  "データがありません": "No data"
 }
