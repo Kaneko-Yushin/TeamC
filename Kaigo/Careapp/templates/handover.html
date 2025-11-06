@@ -1,18 +1,23 @@
 {% extends "base.html" %}
 
+{# base.html のブロック名が content の場合は content、body の場合は body に変更してOK #}
 {% block content %}
 <div class="container my-4">
   <h2 class="mb-3">引継ぎ / 申し送り</h2>
 
-  <!-- 追加フォーム -->
-  <form method="post" action="{{ url_for('handover_new') }}" class="row g-2 mb-4">
+  <!-- 引継ぎ追加フォーム -->
+  <form method="post" action="{{ url_for('handover') }}" class="row g-2 mb-4">
     <div class="col-md-2">
-      <label class="form-label">担当者ID</label>
-      <input name="staff_id" class="form-control" value="1">
+      <label class="form-label">日付</label>
+      <input name="h_date" type="date" class="form-control" value="{{ today }}">
     </div>
     <div class="col-md-2">
-      <label class="form-label">利用者ID (任意)</label>
-      <input name="resident_id" class="form-control" placeholder="例: 1">
+      <label class="form-label">シフト</label>
+      <select name="shift" class="form-select">
+        <option value="day">日勤</option>
+        <option value="evening">準夜</option>
+        <option value="night">夜勤</option>
+      </select>
     </div>
     <div class="col-md-6">
       <label class="form-label">内容</label>
@@ -24,39 +29,34 @@
     </div>
   </form>
 
-  <!-- 一覧 -->
+  <!-- 引継ぎ一覧 -->
   <div class="table-responsive">
-    <table class="table table-sm align-middle">
-      <thead>
+    <table class="table table-sm table-striped align-middle">
+      <thead class="table-success">
         <tr>
-          <th style="width: 80px;">状態</th>
+          <th style="width:140px;">日付</th>
+          <th style="width:120px;">シフト</th>
           <th>内容</th>
-          <th style="width: 180px;">時刻</th>
-          <th style="width: 140px;">担当</th>
-          <th style="width: 140px;">利用者</th>
-          <th style="width: 80px;"></th>
+          <th style="width:160px;">スタッフ</th>
+          <th style="width:180px;">登録時刻</th>
         </tr>
       </thead>
       <tbody>
         {% for r in rows %}
-        <tr class="{% if r.is_read %}table-light{% else %}table-warning{% endif %}">
-          <td>
-            {% if r.is_read %}<span class="badge text-bg-secondary">既読</span>
-            {% else %}<span class="badge text-bg-warning">未読</span>{% endif %}
-          </td>
-          <td>{{ r.note }}</td>
-          <td>{{ r.event_time }}</td>
-          <td>{{ r.staff_name or '-' }}</td>
-          <td>{{ r.resident_name or '-' }}</td>
-          <td>
-            <form method="post" action="{{ url_for('handover_toggle', note_id=r.id) }}">
-              <button class="btn btn-sm {% if r.is_read %}btn-outline-secondary{% else %}btn-outline-primary{% endif %}">
-                切替
-              </button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}  {# ← endfor。endblockと取り違えない！ #}
+          <tr>
+            <td>{{ r.h_date }}</td>
+            <td>
+              {% if r.shift == 'day' %}日勤{% elif r.shift == 'evening' %}準夜{% elif r.shift == 'night' %}夜勤{% else %}{{ r.shift }}{% endif %}
+            </td>
+            <td>{{ r.note }}</td>
+            <td>{{ r.staff }}</td>
+            <td>{{ r.created_at }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="text-center text-muted py-3">本日の申し送りはまだありません。</td>
+          </tr>
+        {% endfor %}
       </tbody>
     </table>
   </div>
