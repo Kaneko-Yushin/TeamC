@@ -28,18 +28,30 @@ babel.init_app(app, locale_selector=get_locale)
 
 # -------------------- JSON翻訳辞書 --------------------
 def _load_json_translations():
+    """
+    優先: <app root>/translations/<lang>.json
+    予備: <app root>/<lang>.json
+    いずれも無ければ空dict
+    """
+    base_dir = app.root_path
+    candidates = [
+        lambda lang: os.path.join(base_dir, "translations", f"{lang}.json"),  # translations/ 優先
+        lambda lang: os.path.join(base_dir, f"{lang}.json"),                  # 直下 フォールバック
+    ]
     data = {}
     for lang in app.config["LANGUAGES"]:
-        path = os.path.join(app.root_path, f"{lang}.json")
-        if os.path.exists(path):
-            with open(path, encoding="utf-8") as f:
+        loaded = {}
+        for pathfn in candidates:
+            path = pathfn(lang)
+            if os.path.exists(path):
                 try:
-                    data[lang] = json.load(f)
+                    with open(path, encoding="utf-8") as f:
+                        loaded = json.load(f)
                 except Exception as e:
-                    print(f"[i18n] Failed to load {lang}.json:", e)
-                    data[lang] = {}
-        else:
-            data[lang] = {}
+                    print(f"[i18n] Failed to load {path}: {e}")
+                    loaded = {}
+                break
+        data[lang] = loaded
     return data
 
 TRANSLATIONS = _load_json_translations()
@@ -226,7 +238,6 @@ def generate_qr():
         role = (request.form.get("role") or "caregiver").strip()
         token = secrets.token_hex(8)
 
-        # UNIQUE制約に依存しないアップサート
         with get_connection() as conn:
             c = conn.cursor()
             c.execute("UPDATE staff SET role=?, login_token=? WHERE name=?", (role, token, name))
