@@ -1,3 +1,34 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="m-0">{{ _('記録一覧') }}</h5>
+  <div>
+    <a class="btn btn-success" href="{{ url_for('add_record') }}">{{ _('記録追加') }}</a>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('home') }}">{{ _('ホームに戻る') }}</a>
+  </div>
+</div>
+<div class="card p-3">
+  <table class="table table-sm table-striped">
+    <thead>
+      <tr>
+        <th>ID</th><th>{{ _('利用者') }}</th><th>{{ _('食事') }}</th><th>{{ _('服薬') }}</th>
+        <th>{{ _('排泄') }}</th><th>{{ _('体調') }}</th><th>{{ _('メモ') }}</th><th>By</th><th>At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td>
+        <td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td><td>{{ r[7] }}</td><td>{{ r[8] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -38,3 +69,4 @@
   </div>
 </body>
 </html>
+>>>>>>> main

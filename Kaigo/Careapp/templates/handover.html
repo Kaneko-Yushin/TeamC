@@ -1,3 +1,51 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h5 class="m-0">{{ _('引継ぎ') }}</h5>
+  <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">{{ _('ホームに戻る') }}</a>
+</div>
+
+<div class="card p-3 mb-3">
+  <form class="row g-2" method="post">
+    <div class="col-sm-3">
+      <label class="form-label">{{ _('日付') }}</label>
+      <input class="form-control" type="date" name="h_date" value="{{ today }}">
+    </div>
+    <div class="col-sm-2">
+      <label class="form-label">{{ _('シフト') }}</label>
+      <select name="shift" class="form-select">
+        <option value="day">day</option>
+        <option value="evening">evening</option>
+        <option value="night">night</option>
+      </select>
+    </div>
+    <div class="col-sm-4">
+      <label class="form-label">{{ _('内容') }}</label>
+      <input class="form-control" name="note">
+    </div>
+    <div class="col-sm-2">
+      <label class="form-label">{{ _('担当') }}</label>
+      <input class="form-control" name="staff" value="{{ session.get('staff_name','') }}">
+    </div>
+    <div class="col-sm-1 d-grid">
+      <label class="form-label">&nbsp;</label>
+      <button class="btn btn-primary">{{ _('追加') }}</button>
+    </div>
+  </form>
+</div>
+
+<div class="card p-3">
+  <table class="table table-striped table-sm">
+    <thead>
+      <tr><th>ID</th><th>{{ _('日付') }}</th><th>{{ _('シフト') }}</th><th>{{ _('内容') }}</th><th>{{ _('担当') }}</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td><td>{{ r[4] }}</td>
+      </tr>
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -96,10 +144,14 @@
       </tr>
       {% else %}
         <tr><td colspan="7" class="text-center text-muted">該当データなし</td></tr>
+>>>>>>> main
       {% endfor %}
     </tbody>
   </table>
 </div>
+<<<<<<< HEAD
+{% endblock %}
+=======
 </body>
 </html>
 
@@ -196,3 +248,4 @@
 </body>
 </html>
 >>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
+>>>>>>> main

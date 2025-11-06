@@ -1,3 +1,80 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+<style>
+  body { background:#f5f8f6; }
+  .section-title {
+    font-weight: 800;
+    font-size: clamp(26px, 3.2vw, 40px);
+    text-align: center;
+    letter-spacing: .05em;
+    margin: 24px 0 28px;
+  }
+  .tile {
+    background: #fff;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.06);
+    padding: 26px 20px 22px;
+    text-align: center;
+    transition: transform .08s ease, box-shadow .2s ease;
+    height: 100%;
+  }
+  .tile:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,.09); }
+  .tile .emoji { font-size: 54px; line-height: 1; margin-bottom: 12px; }
+  .tile .title { font-weight: 700; font-size: 22px; margin-bottom: 6px; color:#0f5132; }
+  .tile .desc { color:#6b7280; font-size: 14px; min-height: 1.4em; }
+</style>
+
+<div class="container py-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">
+      ← {{ _('戻る') }}
+    </a>
+    <div>
+      <a class="btn btn-sm btn-outline-secondary {% if current_lang=='ja' %}active{% endif %}"
+         href="{{ url_for('set_language', lang='ja') }}">日本語</a>
+      <a class="btn btn-sm btn-outline-secondary {% if current_lang=='en' %}active{% endif %}"
+         href="{{ url_for('set_language', lang='en') }}">English</a>
+    </div>
+  </div>
+
+  <h2 class="section-title">{{ _('管理ページ') }}</h2>
+
+  <div class="row g-4">
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('staff_list') }}" class="text-decoration-none d-block h-100">
+        <div class="tile">
+          <div class="emoji">👩‍💼</div>
+          <div class="title">{{ _('スタッフ一覧') }}</div>
+          <div class="desc">{{ _('登録済みスタッフの確認と管理') }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('generate_qr') }}" class="text-decoration-none d-block h-100">
+        <div class="tile">
+          <div class="emoji">🔗</div>
+          <div class="title">{{ _('QR発行') }}</div>
+          <div class="desc">{{ _('スタッフのQRログインを作成') }}</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{{ url_for('users_page') }}" class="text-decoration-none d-block h-100">
+        <div class="tile">
+          <div class="emoji">👥</div>
+          <div class="title">{{ _('利用者管理') }}</div>
+          <div class="desc">{{ _('利用者情報の編集と確認') }}</div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -115,3 +192,4 @@
 >>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
 </body>
 </html>
+>>>>>>> main

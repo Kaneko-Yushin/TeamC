@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('QR発行') }}</h4>
+  <form method="post">
+    <div class="mb-2">
+      <select name="name" class="form-select">
+        {% for n in names %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="btn btn-success">{{ _('QR発行') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('staff_list') }}">{{ _('戻る') }}</a>
+  </form>
+</div>
+{% endblock %}
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -28,3 +45,4 @@
   </div>
 </body>
 </html>
+>>>>>>> main

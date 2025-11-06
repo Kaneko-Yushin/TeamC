@@ -1,3 +1,28 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+<div class="card p-4">
+  <h4 class="mb-3">{{ _('記録追加') }}</h4>
+  <form method="post">
+    <div class="mb-2">
+      <label class="form-label">{{ _('利用者') }}</label>
+      <select class="form-select" name="user_id">
+        {% for u in users %}<option value="{{ u[0] }}">{{ u[1] }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="mb-2"><input class="form-control" name="meal" placeholder="{{ _('食事') }}"></div>
+    <div class="mb-2"><input class="form-control" name="medication" placeholder="{{ _('服薬') }}"></div>
+    <div class="mb-2"><input class="form-control" name="toilet" placeholder="{{ _('排泄') }}"></div>
+    <div class="mb-2"><input class="form-control" name="condition" placeholder="{{ _('体調') }}"></div>
+    <div class="mb-2"><input class="form-control" name="memo" placeholder="{{ _('メモ') }}"></div>
+    <button class="btn btn-primary">{{ _('保存') }}</button>
+    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('records') }}">{{ _('戻る') }}</a>
+  </form>
+</div>
+{% endblock %}
+
+
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -155,3 +180,4 @@
 </body>
 </html>
 >>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
+>>>>>>> main

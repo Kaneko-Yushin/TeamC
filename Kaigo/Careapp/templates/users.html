@@ -1,3 +1,32 @@
+<<<<<<< HEAD
+{% extends "base.html" %}
+{% block body %}
+  <h2 class="mb-3">{{ _('👥 利用者一覧') }}</h2>
+  <div class="row g-3">
+    {% for u in users %}
+    <div class="col-md-6">
+      <div class="card p-3 shadow-sm">
+        <h5 class="mb-1">{{ u[1] }}</h5>
+        <div class="small text-muted">{{ _('年齢') }}: {{ u[2] or '-' }}</div>
+        <div class="small text-muted">{{ _('性別') }}: {{ u[3] or '-' }}</div>
+        <div class="small text-muted">{{ _('部屋番号') }}: {{ u[4] or '-' }}</div>
+        <div class="small text-muted">{{ _('備考') }}: {{ u[5] or '-' }}</div>
+        <div class="mt-2">
+          <a class="btn btn-sm btn-outline-danger"
+             href="{{ url_for('delete_user', user_id=u[0]) }}"
+             onclick="return confirm('{{ _('本当に削除しますか？') }}');">{{ _('削除') }}</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="text-center mt-4 d-flex gap-2">
+    <a href="{{ url_for('add_user') }}" class="btn btn-success">{{ _('＋ 新しい利用者を登録') }}</a>
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">{{ _('← ホームに戻る') }}</a>
+  </div>
+{% endblock %}
+=======
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -82,9 +111,3 @@
 >>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
 </body>
 </html>
-
-
-<<<<<<< HEAD
-
-=======
->>>>>>> 95e3dc54c9054d15c7b23eda68752a4070758130
