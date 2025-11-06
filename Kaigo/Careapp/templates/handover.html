@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% macro handover_core() %}
+{% block content %}
 <div class="container my-4">
   <h2 class="mb-3">引継ぎ / 申し送り</h2>
 
-  <!-- 追加フォーム -->
+  <!-- 引継ぎ追加フォーム -->
   <form method="post" action="{{ url_for('handover') }}" class="row g-2 mb-4">
     <div class="col-md-2">
       <label class="form-label">日付</label>
@@ -29,7 +29,7 @@
   </form>
 
   <!-- 一覧 -->
-  <div class="table-responsive">
+  <div class="table-responsive mb-4">
     <table class="table table-sm table-striped align-middle">
       <thead class="table-success">
         <tr>
@@ -59,10 +59,10 @@
       </tbody>
     </table>
   </div>
-</div>
-{% endmacro %}
 
-{# base.html のどれでも拾えるように複数ブロックを用意 #}
-{% block content %}{{ handover_core() }}{% endblock %}
-{% block body %}{{ handover_core() }}{% endblock %}
-{% block main %}{{ handover_core() }}{% endblock %}
+  <!-- 🔙 戻るボタン -->
+  <div class="text-center my-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
+  </div>
+</div>
+{% endblock %}
