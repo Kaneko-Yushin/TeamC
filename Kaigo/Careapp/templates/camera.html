@@ -1,80 +1,237 @@
 {% extends "base.html" %}
+{% block title %}見守りカメラ{% endblock %}
 {% block content %}
-<div class="card mx-auto" style="max-width:720px;">
-  <div class="card-body">
-    <h3 class="fw-bold mb-3">見守りカメラ（同意済み共用部）</h3>
-    <p class="text-muted">※ 施設の規程・掲示・同意に基づき運用してください。音声は収集しません。</p>
+<div class="container py-3">
+  <div class="d-flex align-items-center mb-3">
+    <a class="btn btn-outline-secondary me-2" href="{{ url_for('home') }}">
+      <i class="bi bi-house"></i> ホームへ
+    </a>
+    <h3 class="m-0"><i class="bi bi-camera"></i> 見守りカメラ</h3>
+  </div>
 
-    <div class="row g-3">
-      <div class="col-md-6"><label class="form-label">撮影時間帯（開始）</label><input type="time" id="tStart" class="form-control" value="09:00"></div>
-      <div class="col-md-6"><label class="form-label">撮影時間帯（終了）</label><input type="time" id="tEnd" class="form-control" value="18:00"></div>
-      <div class="col-md-6"><label class="form-label">最短間隔（秒）</label><input type="number" id="minS" class="form-control" value="60" min="10"></div>
-      <div class="col-md-6"><label class="form-label">最長間隔（秒）</label><input type="number" id="maxS" class="form-control" value="180" min="10"></div>
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <div class="ratio ratio-4x3 bg-dark rounded">
+            <video id="preview" autoplay playsinline muted class="rounded"></video>
+          </div>
+          <canvas id="canvas" class="d-none"></canvas>
+          <div class="mt-3 d-flex flex-wrap gap-2 align-items-end">
+            <div>
+              <label class="form-label mb-1">撮影モード</label>
+              <div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-fixed" value="fixed" checked>
+                  <label class="form-check-label" for="mode-fixed">固定間隔</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-random" value="random">
+                  <label class="form-check-label" for="mode-random">ランダム間隔</label>
+                </div>
+              </div>
+            </div>
+
+            <div id="fixed-box">
+              <label class="form-label mb-1 ms-2">間隔（秒）</label>
+              <input type="number" min="3" step="1" value="15" id="fixed-sec" class="form-control" style="width:120px;">
+            </div>
+
+            <div id="random-box" class="d-none">
+              <label class="form-label mb-1 ms-2">最小（秒）</label>
+              <input type="number" min="3" step="1" value="20" id="rand-min" class="form-control" style="width:120px;">
+              <label class="form-label mb-1 ms-2">最大（秒）</label>
+              <input type="number" min="5" step="1" value="60" id="rand-max" class="form-control" style="width:120px;">
+            </div>
+
+            <div class="ms-2">
+              <label class="form-label mb-1">時間帯（任意）</label>
+              <div class="d-flex align-items-center gap-2">
+                <input type="time" id="from-hh" class="form-control" style="width:140px;" placeholder="開始">
+                〜
+                <input type="time" id="to-hh" class="form-control" style="width:140px;" placeholder="終了">
+              </div>
+              <div class="form-text">指定時刻の範囲内のみ撮影（未指定なら常時）</div>
+            </div>
+
+            <div class="ms-auto d-flex gap-2">
+              <button id="btn-start" class="btn btn-primary"><i class="bi bi-play-fill"></i> 開始</button>
+              <button id="btn-stop" class="btn btn-outline-secondary" disabled><i class="bi bi-stop-fill"></i> 停止</button>
+            </div>
+          </div>
+
+          <div class="mt-2 small text-muted" id="status">準備中…</div>
+        </div>
+      </div>
     </div>
 
-    <div class="mt-3 d-flex gap-2">
-      <button id="btnStart" class="btn btn-success">開始</button>
-      <button id="btnStop" class="btn btn-outline-danger" disabled>停止</button>
+    <div class="col-lg-6">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title"><i class="bi bi-images"></i> 直近のアップロード</h5>
+          <div id="log" class="small" style="max-height:380px; overflow:auto;"></div>
+          <hr>
+          <a href="/album" class="btn btn-outline-secondary"><i class="bi bi-folder"></i> 保存先アルバムを開く</a>
+        </div>
+      </div>
     </div>
-
-    <video id="v" autoplay playsinline class="mt-3 w-100" style="max-height:320px;background:#000;border-radius:10px;"></video>
-    <canvas id="c" class="d-none"></canvas>
   </div>
 </div>
 
 <script>
-const v = document.getElementById('v');
-const c = document.getElementById('c');
-let stream = null, timer = null, running = false;
+(() => {
+  const video = document.getElementById('preview');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const btnStart = document.getElementById('btn-start');
+  const btnStop = document.getElementById('btn-stop');
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
 
-function inWindow() {
-  const s = document.getElementById('tStart').value;
-  const e = document.getElementById('tEnd').value;
-  const now = new Date();
-  const hh = String(now.getHours()).padStart(2,'0');
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const cur = hh + ':' + mm;
-  return (s <= cur && cur <= e);
-}
+  const modeFixed = document.getElementById('mode-fixed');
+  const modeRandom = document.getElementById('mode-random');
+  const fixedBox = document.getElementById('fixed-box');
+  const randomBox = document.getElementById('random-box');
+  const fixedSec = document.getElementById('fixed-sec');
+  const randMin = document.getElementById('rand-min');
+  const randMax = document.getElementById('rand-max');
+  const fromHH = document.getElementById('from-hh');
+  const toHH = document.getElementById('to-hh');
 
-async function snapAndUpload() {
-  if (!running || !inWindow()) return scheduleNext();
-  const w = v.videoWidth, h = v.videoHeight;
-  if (!w || !h) return scheduleNext();
-  c.width = w; c.height = h;
-  const ctx = c.getContext('2d');
-  ctx.drawImage(v, 0, 0, w, h);
-  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
-  const fd = new FormData();
-  fd.append('photo', blob, `snap_${Date.now()}.jpg`);
-  fetch('{{ url_for("album_upload") }}', { method:'POST', body: fd })
-    .catch(console.error)
-    .finally(scheduleNext);
-}
+  let stream = null;
+  let timer = null;
+  let running = false;
 
-function scheduleNext() {
-  if (!running) return;
-  const min = Number(document.getElementById('minS').value || 60);
-  const max = Number(document.getElementById('maxS').value || 180);
-  const delay = Math.floor(min*1000 + Math.random()*(max-min)*1000);
-  timer = setTimeout(snapAndUpload, delay);
-}
+  function setStatus(msg) {
+    statusEl.textContent = msg;
+  }
 
-document.getElementById('btnStart').onclick = async () => {
-  try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    v.srcObject = stream;
-    running = true;
-    document.getElementById('btnStart').disabled = true;
-    document.getElementById('btnStop').disabled = false;
-    scheduleNext();
-  } catch (e) { alert('カメラが利用できません: ' + e); }
-};
-document.getElementById('btnStop').onclick = () => {
-  running = false; clearTimeout(timer);
-  if (stream) stream.getTracks().forEach(t => t.stop());
-  document.getElementById('btnStart').disabled = false;
-  document.getElementById('btnStop').disabled = true;
-};
+  function addLog(msg) {
+    const line = document.createElement('div');
+    line.textContent = `[${new Date().toLocaleString()}] ${msg}`;
+    logEl.prepend(line);
+  }
+
+  function inTimeWindow() {
+    if (!fromHH.value && !toHH.value) return true;
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+
+    const parseHM = (v) => {
+      const [h, m] = (v || '00:00').split(':').map(Number);
+      return h * 60 + m;
+    };
+    const s = fromHH.value ? parseHM(fromHH.value) : 0;
+    const e = toHH.value ? parseHM(toHH.value) : 24 * 60;
+
+    // 範囲が日付跨ぎでもOKにする
+    if (s <= e) return cur >= s && cur <= e;
+    return (cur >= s && cur <= 1440) || (cur >= 0 && cur <= e);
+  }
+
+  function nextDelayMs() {
+    if (modeRandom.checked) {
+      const min = Math.max(3, parseInt(randMin.value || '20', 10));
+      const max = Math.max(min + 1, parseInt(randMax.value || '60', 10));
+      return (Math.floor(Math.random() * (max - min + 1)) + min) * 1000;
+    }
+    const sec = Math.max(3, parseInt(fixedSec.value || '15', 10));
+    return sec * 1000;
+  }
+
+  async function captureOnce() {
+    if (!running) return;
+    if (!inTimeWindow()) {
+      setStatus('指定時間帯外のため待機中…');
+      scheduleNext();
+      return;
+    }
+    try {
+      const vw = video.videoWidth || 640;
+      const vh = video.videoHeight || 480;
+      canvas.width = vw; canvas.height = vh;
+      ctx.drawImage(video, 0, 0, vw, vh);
+      const blob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.85));
+      await uploadBlob(blob);
+      addLog('写真をアップロードしました。');
+      setStatus('撮影 → アップロード完了');
+    } catch (e) {
+      console.error(e);
+      addLog('アップロード失敗: ' + e);
+      setStatus('エラー: ' + e);
+    } finally {
+      scheduleNext();
+    }
+  }
+
+  function scheduleNext() {
+    if (!running) return;
+    clearTimeout(timer);
+    timer = setTimeout(captureOnce, nextDelayMs());
+  }
+
+  async function uploadBlob(blob) {
+    const fd = new FormData();
+    fd.append('photo', blob, 'cap.jpg');
+    const resp = await fetch('/album/upload', { method: 'POST', body: fd });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  }
+
+  async function start() {
+    if (running) return;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      video.srcObject = stream;
+      running = true;
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      setStatus('撮影を開始しました。');
+      addLog('撮影を開始');
+      scheduleNext();
+    } catch (e) {
+      console.error(e);
+      setStatus('カメラの使用が許可されませんでした。');
+    }
+  }
+
+  function stop() {
+    running = false;
+    clearTimeout(timer);
+    btnStart.disabled = false;
+    btnStop.disabled = true;
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    setStatus('停止しました。');
+    addLog('停止');
+  }
+
+  // UI 切替
+  modeFixed.addEventListener('change', () => {
+    fixedBox.classList.remove('d-none');
+    randomBox.classList.add('d-none');
+  });
+  modeRandom.addEventListener('change', () => {
+    fixedBox.classList.add('d-none');
+    randomBox.classList.remove('d-none');
+  });
+
+  btnStart.addEventListener('click', start);
+  btnStop.addEventListener('click', stop);
+
+  // タブが非表示の間は停止、戻ったら自動再開
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && running) {
+      stop();
+      addLog('タブ非表示 → 自動停止');
+    } else if (!document.hidden && !running) {
+      addLog('タブ復帰 → 自動再開');
+      start();
+    }
+  });
+
+  setStatus('カメラの開始を押してください。');
+})();
 </script>
 {% endblock %}

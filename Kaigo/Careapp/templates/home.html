@@ -80,6 +80,29 @@
         </div>
       </a>
     </div>
+
+    <!-- ▼ 追加：見守りカメラ -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('camera_page') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">📷</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">見守りカメラ</h3>
+          <p class="menu-desc mb-0">一定/ランダム間隔で自動スナップ</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- ▼ 任意：アルバム（保存先一覧） -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('album_index') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">🖼️</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">アルバム</h3>
+          <p class="menu-desc mb-0">撮影した写真を閲覧</p>
+        </div>
+      </a>
+    </div>
+
   </div>
 </div>
 {% endblock %}

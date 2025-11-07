@@ -7,8 +7,11 @@ from functools import wraps
 import sqlite3, qrcode, io, secrets, os, json, csv, math
 from datetime import date, datetime
 from flask_babel import Babel
+from jinja2 import TemplateNotFound
 
-# ===== 基本設定 =====
+# =========================
+# 基本設定
+# =========================
 APP_ROOT = os.path.dirname(__file__)
 DB_PATH = os.environ.get("DB_PATH") or os.path.join(APP_ROOT, "care.db")
 APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
@@ -16,7 +19,9 @@ APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
 app = Flask(__name__)
 app.secret_key = APP_SECRET
 
-# ===== Babel / i18n =====
+# =========================
+# Babel / i18n（JSON辞書）
+# =========================
 app.config["BABEL_DEFAULT_LOCALE"] = "ja"
 app.config["BABEL_DEFAULT_TIMEZONE"] = "Asia/Tokyo"
 app.config["LANGUAGES"] = ["ja", "en"]
@@ -57,8 +62,10 @@ TRANSLATIONS = _load_json_translations()
 def _t(key, **kwargs):
     s = TRANSLATIONS.get(get_locale(), {}).get(key, key)
     if kwargs:
-        try: s = s % kwargs
-        except Exception: pass
+        try:
+            s = s % kwargs
+        except Exception:
+            pass
     return s
 
 _ = _t
@@ -84,7 +91,9 @@ def i18n_debug():
     lang = get_locale()
     return {"current_lang": lang, "keys_loaded": len(TRANSLATIONS.get(lang, {}))}
 
-# ===== DB =====
+# =========================
+# DB
+# =========================
 def dict_factory(cursor, row):
     return {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
 
@@ -99,13 +108,14 @@ def get_connection():
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
-        # 既存テーブル
+        # 利用者
         c.execute("""
         CREATE TABLE IF NOT EXISTS users(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL, age INTEGER, gender TEXT,
           room_number TEXT, notes TEXT
         )""")
+        # スタッフ
         c.execute("""
         CREATE TABLE IF NOT EXISTS staff(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -114,6 +124,7 @@ def init_db():
           role TEXT NOT NULL,
           login_token TEXT
         )""")
+        # 記録
         c.execute("""
         CREATE TABLE IF NOT EXISTS records(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -123,6 +134,7 @@ def init_db():
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )""")
+        # 引継ぎ
         c.execute("""
         CREATE TABLE IF NOT EXISTS handover(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -132,7 +144,7 @@ def init_db():
           staff TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
-        # 追加：家族向け
+        # 家族向け
         c.execute("""
         CREATE TABLE IF NOT EXISTS family (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -152,19 +164,24 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_handover_date ON handover(h_date, shift)")
         conn.commit()
-    # 初回管理者
+
+    # 初回管理者（無ければ作成）
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM staff WHERE role='admin'")
         if (c.fetchone()["cnt"] or 0) == 0:
-            c.execute("INSERT OR IGNORE INTO staff(name,password,role) VALUES(?,?,?)",
-                      ("admin","admin","admin"))
+            c.execute(
+                "INSERT OR IGNORE INTO staff(name,password,role) VALUES(?,?,?)",
+                ("admin", "admin", "admin")
+            )
             conn.commit()
 
-# 初期化（既存DBでも不足テーブルを作る）
+# 初期化
 init_db()
 
-# ===== 認可（職員） =====
+# =========================
+# 認可
+# =========================
 def login_required(f):
     @wraps(f)
     def w(*a, **kw):
@@ -182,7 +199,6 @@ def admin_required(f):
         return f(*a, **kw)
     return w
 
-# ===== 認可（家族） =====
 def family_login_required(f):
     @wraps(f)
     def w(*a, **kw):
@@ -192,7 +208,9 @@ def family_login_required(f):
         return f(*a, **kw)
     return w
 
-# ===== 共通 =====
+# =========================
+# 共通ヘルパ
+# =========================
 def paginate(total: int, page: int, per_page: int):
     pages = max(1, math.ceil(total / per_page))
     page = max(1, min(page, pages))
@@ -202,22 +220,37 @@ def paginate(total: int, page: int, per_page: int):
         "prev_page": page-1 if page>1 else None, "next_page": page+1 if page<pages else None,
     }
 
-# ===== 画面：共通 =====
+def tpl(name: str, **ctx):
+    """テンプレートが無いときは簡易フォールバック"""
+    try:
+        return render_template(name, **ctx)
+    except TemplateNotFound:
+        return ctx.get("_fallback_html", "template missing")
+
+# =========================
+# 画面：ホーム
+# =========================
 @app.get("/")
 def home():
-    try:
-        return render_template("home.html")
-    except Exception:
-        return (
+    return tpl("home.html",
+        _fallback_html=(
             "<h1>デジタル介護日誌</h1>"
-            "<p><a href='/staff_login'>スタッフログイン</a> | "
-            "<a href='/family_login'>家族ログイン</a> | "
-            "<a href='/records'>記録</a> | "
-            "<a href='/handover'>引継ぎ</a> | "
-            "<a href='/users'>利用者</a></p>"
+            "<p><a href='/set_language/ja'>日本語</a> | <a href='/set_language/en'>English</a></p>"
+            "<ul>"
+            "<li><a href='/staff_login'>スタッフログイン</a></li>"
+            "<li><a href='/family_login'>家族ログイン</a></li>"
+            "<li><a href='/records'>記録一覧</a>（要ログイン）</li>"
+            "<li><a href='/handover'>引継ぎ</a>（要ログイン）</li>"
+            "<li><a href='/camera'>見守りカメラ</a>（要ログイン）</li>"
+            "<li><a href='/users'>利用者一覧</a>（管理者）</li>"
+            "<li><a href='/admin'>管理</a>（管理者）</li>"
+            "</ul>"
         )
+    )
 
-# ===== スタッフ：登録/ログイン/設定など =====
+# =========================
+# スタッフ：登録/ログイン/管理
+# =========================
 @app.route("/staff_register", methods=["GET","POST"])
 def staff_register():
     if request.method == "POST":
@@ -237,7 +270,17 @@ def staff_register():
                 return redirect(url_for("staff_login"))
             except sqlite3.IntegrityError:
                 flash(_("同名のスタッフがすでに存在します。"))
-    return render_template("staff_register.html")
+    return tpl("staff_register.html",
+        _fallback_html=(
+            "<h2>スタッフ登録</h2>"
+            "<form method='post'>"
+            "名前:<input name='name' required><br>"
+            "パスワード:<input name='password' type='password' required><br>"
+            "<button>登録</button>"
+            "</form>"
+            "<p><a href='/'>ホームへ</a></p>"
+        )
+    )
 
 @app.route("/staff_login", methods=["GET","POST"])
 def staff_login():
@@ -254,7 +297,17 @@ def staff_login():
             flash(_("%(n)s さんでログインしました。", n=row["name"]))
             return redirect(url_for("home"))
         flash(_("名前またはパスワードが間違っています。"))
-    return render_template("staff_login.html")
+    return tpl("staff_login.html",
+        _fallback_html=(
+            "<h2>スタッフログイン</h2>"
+            "<form method='post'>"
+            "名前:<input name='name' required><br>"
+            "パスワード:<input name='password' type='password' required><br>"
+            "<button>ログイン</button>"
+            "</form>"
+            "<p><a href='/staff_register'>スタッフ登録</a> / <a href='/'>ホームへ</a></p>"
+        )
+    )
 
 @app.get("/logout")
 def logout():
@@ -265,9 +318,22 @@ def logout():
 @app.get("/admin")
 @admin_required
 def admin_page():
-    return render_template("admin.html")
+    return tpl("admin.html",
+        _fallback_html=(
+            "<h2>管理</h2>"
+            "<form method='post' action='/admin/staff/add'>"
+            "スタッフ名:<input name='name' required>"
+            " パスワード:<input name='password' required type='password'>"
+            " 役割:<select name='role'><option value='caregiver'>caregiver</option>"
+            "<option value='admin'>admin</option></select>"
+            " <button>登録/更新</button></form>"
+            "<p><a href='/staff_list'>スタッフ一覧</a> | "
+            "<a href='/generate_qr'>QR生成</a> | "
+            "<a href='/qr_links'>QRリンク一覧</a> | "
+            "<a href='/'>ホームへ</a></p>"
+        )
+    )
 
-# 管理画面からスタッフ登録（既存）
 @app.post("/admin/staff/add")
 @admin_required
 def admin_staff_add():
@@ -291,7 +357,6 @@ def admin_staff_add():
             flash(f"既存スタッフ「{name}」の情報を更新しました（role={role}）。")
     return redirect(url_for("admin_page"))
 
-# スタッフ一覧・削除・QR
 @app.get("/staff_list")
 @admin_required
 def staff_list():
@@ -299,7 +364,18 @@ def staff_list():
         c = conn.cursor()
         c.execute("SELECT id, name, password, role, login_token FROM staff ORDER BY id")
         staff = c.fetchall()
-    return render_template("staff_list.html", staff_list=staff)
+    return tpl("staff_list.html", staff_list=staff,
+        _fallback_html=(
+            "<h2>スタッフ一覧</h2>"
+            "<table border='1'><tr><th>ID</th><th>名前</th><th>役割</th><th>QR</th><th>削除</th></tr>"
+            "{rows}</table><p><a href='/admin'>管理へ</a></p>"
+        ).format(rows="".join(
+            f"<tr><td>{s['id']}</td><td>{s['name']}</td><td>{s['role']}</td>"
+            f"<td>{('あり' if s.get('login_token') else '未発行')}</td>"
+            f"<td><a href='/delete_staff/{s['id']}'>削除</a></td></tr>"
+            for s in staff
+        ))
+    )
 
 @app.route("/delete_staff/<int:sid>", methods=["POST","GET"])
 @admin_required
@@ -334,7 +410,16 @@ def generate_qr():
         c = conn.cursor()
         c.execute("SELECT name FROM staff ORDER BY id")
         names = [r["name"] for r in c.fetchall()]
-    return render_template("generate_qr.html", names=names)
+    return tpl("generate_qr.html", names=names,
+        _fallback_html=(
+            "<h2>QR生成</h2>"
+            "<form method='post'>"
+            "名前:<select name='name'>{opts}</select> "
+            "役割:<select name='role'><option>caregiver</option><option>admin</option></select> "
+            "<button>QR作成</button></form>"
+            "<p><a href='/admin'>管理へ</a></p>"
+        ).format(opts="".join(f"<option>{n}</option>" for n in names))
+    )
 
 @app.get("/qr/<token>.png")
 @admin_required
@@ -344,6 +429,21 @@ def qr_png(token):
     img = qrcode.make(login_url)
     buf = io.BytesIO(); img.save(buf, format="PNG"); buf.seek(0)
     return send_file(buf, mimetype="image/png")
+
+@app.get("/qr_links")
+@admin_required
+def qr_links():
+    # 既発行トークンのダイレクトログインURL一覧（要管理者）
+    host = request.host.split(":")[0]
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT name, login_token FROM staff WHERE login_token IS NOT NULL AND login_token!=''")
+        rows = c.fetchall()
+    links = [
+        f"<li>{r['name']}: <a href='http://{host}:5000/login/{r['login_token']}'>login/{r['login_token']}</a></li>"
+        for r in rows
+    ] or ["<li>発行なし</li>"]
+    return "<h2>QRリンク一覧</h2><ul>" + "".join(links) + "</ul><p><a href='/admin'>管理へ</a></p>"
 
 @app.get("/login/<token>")
 def login_by_qr(token):
@@ -358,7 +458,9 @@ def login_by_qr(token):
     flash(_("%(n)s さんでログインしました。", n=row["name"]))
     return redirect(url_for("home"))
 
-# ===== 利用者 =====
+# =========================
+# 利用者
+# =========================
 @app.get("/users")
 @admin_required
 def users_page():
@@ -366,7 +468,19 @@ def users_page():
         c = conn.cursor()
         c.execute("SELECT id, name, age, gender, room_number, notes FROM users ORDER BY id")
         users = c.fetchall()
-    return render_template("users.html", users=users)
+    return tpl("users.html", users=users,
+        _fallback_html=(
+            "<h2>利用者一覧</h2>"
+            "<p><a href='/add_user'>利用者登録</a> | <a href='/'>ホームへ</a></p>"
+            "<table border='1'><tr><th>ID</th><th>氏名</th><th>年齢</th><th>性別</th><th>部屋</th><th>メモ</th><th>削除</th></tr>"
+            "{rows}</table>"
+        ).format(rows="".join(
+            f"<tr><td>{u['id']}</td><td>{u['name']}</td><td>{u.get('age','')}</td>"
+            f"<td>{u.get('gender','')}</td><td>{u.get('room_number','')}</td>"
+            f"<td>{u.get('notes','')}</td><td><a href='/delete_user/{u['id']}'>削除</a></td></tr>"
+            for u in users
+        ))
+    )
 
 @app.route("/add_user", methods=["GET","POST"])
 @admin_required
@@ -386,7 +500,19 @@ def add_user():
             conn.commit()
         flash(_("利用者を登録しました。"))
         return redirect(url_for("users_page"))
-    return render_template("add_user.html")
+    return tpl("add_user.html",
+        _fallback_html=(
+            "<h2>利用者登録</h2>"
+            "<form method='post'>"
+            "氏名:<input name='name' required><br>"
+            "年齢:<input name='age' type='number' min='0' step='1'><br>"
+            "性別:<input name='gender'><br>"
+            "部屋:<input name='room_number'><br>"
+            "メモ:<textarea name='notes'></textarea><br>"
+            "<button>登録</button></form>"
+            "<p><a href='/users'>一覧へ</a> | <a href='/'>ホームへ</a></p>"
+        )
+    )
 
 @app.get("/delete_user/<int:user_id>")
 @admin_required
@@ -398,7 +524,9 @@ def delete_user(user_id):
     flash(_("利用者を削除しました。"))
     return redirect(url_for("users_page"))
 
-# ===== 記録 =====
+# =========================
+# 記録
+# =========================
 @app.get("/records")
 @login_required
 def records():
@@ -418,7 +546,21 @@ def records():
          LIMIT ? OFFSET ?
         """, (pg["per_page"], offset))
         rows = c.fetchall()
-    return render_template("records.html", rows=rows, pg=pg)
+    return tpl("records.html", rows=rows, pg=pg,
+        _fallback_html=(
+            "<h2>記録一覧</h2>"
+            "<p><a href='/add_record'>記録を追加</a> | <a href='/records/export.csv'>CSV出力</a> | <a href='/'>ホームへ</a></p>"
+            "<table border='1'><tr><th>ID</th><th>利用者</th><th>食事</th><th>投薬</th>"
+            "<th>トイレ</th><th>状態</th><th>メモ</th><th>記録者</th><th>日時</th></tr>"
+            "{rows}</table>"
+        ).format(rows="".join(
+            f"<tr><td>{r['id']}</td><td>{r['user_name']}</td><td>{r.get('meal','')}</td>"
+            f"<td>{r.get('medication','')}</td><td>{r.get('toilet','')}</td>"
+            f"<td>{r.get('condition','')}</td><td>{r.get('memo','')}</td>"
+            f"<td>{r.get('staff_name','')}</td><td>{r.get('created_at','')}</td></tr>"
+            for r in rows
+        ))
+    )
 
 @app.get("/records/export.csv")
 @admin_required
@@ -437,7 +579,8 @@ def export_records_csv():
         "id","user_name","meal","medication","toilet","condition","memo","staff_name","created_at"
     ])
     writer.writeheader()
-    for r in rows: writer.writerow(r)
+    for r in rows:
+        writer.writerow(r)
     mem = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return send_file(mem, as_attachment=True,
@@ -481,9 +624,24 @@ def add_record():
             conn.commit()
         flash(_("記録を保存しました。"))
         return redirect(url_for("records"))
-    return render_template("add_record.html", users=users)
+    return tpl("add_record.html", users=users,
+        _fallback_html=(
+            "<h2>記録追加</h2>"
+            "<form method='post'>"
+            "利用者:<select name='user_id' required>{opts}</select><br>"
+            "食事:<input name='meal'><br>"
+            "投薬:<input name='medication'><br>"
+            "トイレ:<input name='toilet'><br>"
+            "状態:<input name='condition'><br>"
+            "メモ:<textarea name='memo'></textarea><br>"
+            "<button>保存</button></form>"
+            "<p><a href='/records'>一覧へ</a> | <a href='/'>ホームへ</a></p>"
+        ).format(opts="".join(f"<option value='{u['id']}'>{u['name']}</option>" for u in users))
+    )
 
-# ===== 引継ぎ =====
+# =========================
+# 引継ぎ
+# =========================
 @app.route("/handover", methods=["GET","POST"])
 @login_required
 def handover():
@@ -499,6 +657,7 @@ def handover():
             conn.commit()
         flash(_("引継ぎを追加しました。"))
         return redirect(url_for("handover"))
+
     h_date = request.args.get("date") or date.today().isoformat()
     page = int(request.args.get("page", 1))
     per_page = max(1, min(int(request.args.get("per_page", 50)), 200))
@@ -516,7 +675,20 @@ def handover():
          LIMIT ? OFFSET ?
         """, (h_date, pg["per_page"], offset))
         rows = c.fetchall()
-    return render_template("handover.html", rows=rows, today=h_date, pg=pg)
+    return tpl("handover.html", rows=rows, today=h_date, pg=pg,
+        _fallback_html=(
+            f"<h2>引継ぎ（{h_date}）</h2>"
+            "<form method='post'>日付:<input name='h_date' value='{d}'> "
+            "勤務:<select name='shift'><option>day</option><option>evening</option><option>night</option></select> "
+            "内容:<input name='note' size='60'> <button>追加</button></form>"
+            "<table border='1'><tr><th>ID</th><th>日付</th><th>勤務</th><th>内容</th><th>担当</th><th>作成</th></tr>{rows}</table>"
+            "<p><a href='/'>ホームへ</a></p>"
+        ).format(d=h_date, rows="".join(
+            f"<tr><td>{r['id']}</td><td>{r['h_date']}</td><td>{r['shift']}</td>"
+            f"<td>{r['note']}</td><td>{r['staff']}</td><td>{r['created_at']}</td></tr>"
+            for r in rows
+        ))
+    )
 
 @app.get("/api/handover")
 @login_required
@@ -534,7 +706,9 @@ def api_handover():
         rows = c.fetchall()
     return jsonify({"handover": rows})
 
-# ===== 家族向け =====
+# =========================
+# 家族向け
+# =========================
 @app.route("/family_login", methods=["GET","POST"])
 def family_login():
     if request.method == "POST":
@@ -550,7 +724,16 @@ def family_login():
             flash(f"{row['name']} さんで家族ログインしました。")
             return redirect(url_for("family_home"))
         flash("名前またはパスワードが間違っています。")
-    return render_template("family_login.html")
+    return tpl("family_login.html",
+        _fallback_html=(
+            "<h2>家族ログイン</h2>"
+            "<form method='post'>"
+            "名前:<input name='name' required> "
+            "パスワード:<input name='password' type='password' required> "
+            "<button>ログイン</button></form>"
+            "<p><a href='/'>ホームへ</a></p>"
+        )
+    )
 
 @app.get("/family_logout")
 def family_logout():
@@ -572,7 +755,15 @@ def family_home():
            ORDER BY u.id
         """, (fam,))
         users = c.fetchall()
-    return render_template("family_home.html", users=users)
+    return tpl("family_home.html", users=users,
+        _fallback_html=(
+            "<h2>閲覧可能な利用者</h2>"
+            "<ul>{items}</ul><p><a href='/family_logout'>ログアウト</a> | <a href='/'>ホームへ</a></p>"
+        ).format(items="".join(
+            f"<li><a href='/family/records/{u['id']}'>{u['name']}（{u.get('room_number','')}）</a></li>"
+            for u in users
+        ))
+    )
 
 @app.get("/family/records/<int:user_id>")
 @family_login_required
@@ -591,13 +782,36 @@ def family_records(user_id):
            LIMIT 100
         """, (user_id,))
         rows = c.fetchall()
-    return render_template("family_records.html", rows=rows)
+    return tpl("family_records.html", rows=rows,
+        _fallback_html=(
+            "<h2>最新記録</h2>"
+            "<table border='1'><tr><th>日時</th><th>食事</th><th>投薬</th><th>トイレ</th><th>状態</th></tr>"
+            "{rows}</table><p><a href='/family'>戻る</a></p>"
+        ).format(rows="".join(
+            f"<tr><td>{r['created_at']}</td><td>{r.get('meal','')}</td>"
+            f"<td>{r.get('medication','')}</td><td>{r.get('toilet','')}</td>"
+            f"<td>{r.get('condition','')}</td></tr>"
+            for r in rows
+        ))
+    )
 
-# ===== 見守りカメラ（同意・共用部・施設端末想定） =====
+# =========================
+# 見守りカメラ
+# =========================
 @app.get("/camera")
 @login_required
 def camera_page():
-    return render_template("camera.html")
+    # テンプレが無いときのフォールバック（UIは最小限）
+    return tpl("camera.html",
+        _fallback_html=(
+            "<h2>カメラ（簡易アップロード）</h2>"
+            "<form method='post' action='/album/upload' enctype='multipart/form-data'>"
+            "<input type='file' name='photo' accept='image/png,image/jpeg' required>"
+            "<button>アップロード</button></form>"
+            "<p>※2MBまで / JPG, PNG</p>"
+            "<p><a href='/'>ホームへ</a> | <a href='/album'>アルバム</a></p>"
+        )
+    )
 
 @app.post("/album/upload")
 @login_required
@@ -615,7 +829,29 @@ def album_upload():
         out.write(data)
     return "ok", 200
 
-# ===== 雑多 =====
+@app.get("/album")
+@login_required
+def album_index():
+    folder = os.path.join(app.root_path, "static", "album")
+    os.makedirs(folder, exist_ok=True)
+    files = sorted((f for f in os.listdir(folder) if f.lower().endswith((".jpg",".jpeg",".png"))), reverse=True)
+    items = "".join(
+        f"<div style='width:160px;display:inline-block;margin:6px;text-align:center'>"
+        f"<a href='/static/album/{f}' target='_blank'><img src='/static/album/{f}' style='width:160px;height:120px;object-fit:cover;border-radius:8px'></a>"
+        f"<div class='small text-muted' style='word-break:break-all'>{f}</div></div>"
+        for f in files
+    ) or "<p>まだありません。</p>"
+    return (
+        "<div class='container py-3'>"
+        "<a class='btn btn-outline-secondary mb-3' href='/'><span>🏠</span> ホームへ</a>"
+        "<h3>アルバム</h3>"
+        f"{items}"
+        "</div>"
+    )
+
+# =========================
+# 雑多
+# =========================
 @app.get("/favicon.ico")
 def favicon():
     ico = os.path.join(app.root_path, "static", "favicon.ico")
@@ -640,5 +876,5 @@ def not_found(e):
         return "Not Found", 404
 
 if __name__ == "__main__":
-    # PWA の Service Worker は static から配信（base.html で登録）
+    # Service Worker は base.html で登録する想定（PWA対応）
     app.run(host="0.0.0.0", port=5000, debug=True)
