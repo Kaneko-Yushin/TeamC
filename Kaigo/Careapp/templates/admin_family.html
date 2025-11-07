@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .family-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #fff;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.08);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(0,0,0,.1);
+  }
+  h2.title {
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: #173d2a;
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .btn-main {
+    background: #256b3f;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 6px 16px;
+    transition: background .2s;
+  }
+  .btn-main:hover {
+    background: #1e5833;
+  }
+</style>
+
+<div class="family-wrap mt-4">
+  <div class="text-center mb-3">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary btn-sm">🏠 ホームに戻る</a>
+  </div>
+
+  <h2 class="title">家族アカウント管理</h2>
+
+  <!-- アカウント作成 -->
+  <div class="card p-4 mb-4">
+    <h4 class="mb-3">👨‍👩‍👧 家族アカウント作成</h4>
+    <form method="post" action="{{ url_for('admin_family_add') }}" class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <input name="name" class="form-control" placeholder="家族名" required>
+      </div>
+      <div class="col-md-5">
+        <input name="password" class="form-control" placeholder="パスワード" required type="password">
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn-main w-100">作成</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 利用者との紐づけ -->
+  <div class="card p-4 mb-4">
+    <h4 class="mb-3">🔗 利用者との紐づけ</h4>
+    <form method="post" action="{{ url_for('admin_family_map') }}" class="row g-3 align-items-center">
+      <div class="col-md-5">
+        <select name="family_name" class="form-select" required>
+          {% for f in families %}
+            <option value="{{ f.name }}">{{ f.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-5">
+        <select name="user_id" class="form-select" required>
+          {% for u in users %}
+            <option value="{{ u.id }}">{{ u.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2 text-end">
+        <button class="btn-main w-100">紐づけ</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 紐づけ一覧 -->
+  <div class="card p-4 mb-4">
+    <h4 class="mb-3">📋 現在の紐づけ一覧</h4>
+    {% if maps %}
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr><th>家族名</th><th>利用者ID</th><th>解除</th></tr>
+        </thead>
+        <tbody>
+        {% for m in maps %}
+          <tr>
+            <td>{{ m.family_name }}</td>
+            <td>{{ m.user_id }}</td>
+            <td>
+              <form method="post" action="{{ url_for('admin_family_unmap') }}">
+                <input type="hidden" name="family_name" value="{{ m.family_name }}">
+                <input type="hidden" name="user_id" value="{{ m.user_id }}">
+                <button class="btn btn-sm btn-outline-danger">解除</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-muted">まだ紐づけはありません。</p>
+    {% endif %}
+  </div>
+
+  <!-- 家族アカウント一覧 -->
+  <div class="card p-4 mb-5">
+    <h4 class="mb-3">👪 家族アカウント一覧</h4>
+    {% if families %}
+      <table class="table align-middle">
+        <thead><tr><th>ID</th><th>名前</th><th>削除</th></tr></thead>
+        <tbody>
+          {% for f in families %}
+            <tr>
+              <td>{{ f.id }}</td>
+              <td>{{ f.name }}</td>
+              <td>
+                <form method="post" action="{{ url_for('admin_family_delete', fid=f.id) }}" onsubmit="return confirm('削除しますか？');">
+                  <button class="btn btn-sm btn-outline-danger">削除</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="text-muted">まだ家族アカウントがありません。</p>
+    {% endif %}
+  </div>
+
+  <div class="text-center mb-4">
+    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">🏠 ホームに戻る</a>
+  </div>
+</div>
+{% endblock %}
