@@ -2,17 +2,63 @@
 {% block content %}
 <h3 class="mb-3">利用者登録</h3>
 <form method="post" class="row g-3">
-  <div class="col-md-6"><label class="form-label">氏名</label><input class="form-control" name="name" required></div>
-  <div class="col-md-3"><label class="form-label">年齢</label><input class="form-control" type="number" name="age"></div>
-  <div class="col-md-3"><label class="form-label">性別</label>
-    <select name="gender" class="form-select"><option value="">選択してください</option><option>男</option><option>女</option></select>
+  <div class="col-md-6">
+    <label class="form-label">氏名</label>
+    <input class="form-control" name="name" required>
   </div>
-  <div class="col-md-4"><label class="form-label">部屋番号</label><input class="form-control" name="room_number"></div>
-  <div class="col-md-8"><label class="form-label">備考</label><textarea class="form-control" rows="3" name="notes"></textarea></div>
+ 
+  <!-- 生年月日入力欄 -->
+  <div class="col-md-3">
+    <label class="form-label">生年月日</label>
+    <input class="form-control" type="date" name="birth_date" id="birth_date" required>
+  </div>
+ 
+  <!-- 自動計算される年齢表示欄 -->
+  <div class="col-md-3">
+    <label class="form-label">年齢</label>
+    <input class="form-control" type="number" name="age" id="age" readonly>
+  </div>
+ 
+  <div class="col-md-3">
+    <label class="form-label">性別</label>
+    <select name="gender" class="form-select">
+      <option value="">選択してください</option>
+      <option>男</option>
+      <option>女</option>
+    </select>
+  </div>
+ 
+  <div class="col-md-4">
+    <label class="form-label">部屋番号</label>
+    <input class="form-control" name="room_number">
+  </div>
+ 
+  <div class="col-md-8">
+    <label class="form-label">備考</label>
+    <textarea class="form-control" rows="3" name="notes"></textarea>
+  </div>
+ 
   <div class="col-12 d-flex gap-2">
     <button class="btn btn-success" type="submit">登録</button>
     <a class="btn btn-outline-secondary" href="{{ url_for('users_page') }}">戻る</a>
   </div>
 </form>
-<div class="text-center mt-4"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
+ 
+<div class="text-center mt-4">
+  <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a>
+</div>
+ 
+<!-- 🧮 年齢自動計算スクリプト -->
+<script>
+  document.getElementById("birth_date").addEventListener("change", function() {
+    const birthDate = new Date(this.value);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    document.getElementById("age").value = age >= 0 ? age : "";
+  });
+</script>
 {% endblock %}
