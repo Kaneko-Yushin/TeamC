@@ -8,7 +8,8 @@
   a.card-link{text-decoration:none;color:inherit}
 </style>
 
-<div class="row g-4">
+<!-- 上段：カード -->
+<div class="row g-4 mb-4">
   <!-- スタッフ一覧 -->
   <div class="col-12 col-md-6 col-lg-4">
     <a href="{{ url_for('staff_list') }}" class="card-link">
@@ -30,21 +31,33 @@
       </div>
     </a>
   </div>
-
-  <!-- スタッフ登録（カード版） -->
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('staff_register') }}" class="card-link">
-      <div class="p-4 text-center set-card">
-        <div style="font-size:56px;line-height:1">🆕</div>
-        <h3 class="mt-2 mb-1" style="color:#134e2b;">スタッフ登録</h3>
-        <p class="text-muted mb-0">新しいスタッフの作成（権限選択可）</p>
-      </div>
-    </a>
-  </div>
 </div>
 
-<div class="text-center mt-5">
-  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
+<!-- 下段：管理者専用 スタッフ登録（権限選択付き） -->
+<div class="p-4" style="border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(0,0,0,.08);">
+  <h4 class="mb-3" style="color:#134e2b;">スタッフ登録（管理者のみ）</h4>
+  <form method="post" action="{{ url_for('admin_staff_add') }}" class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">名前</label>
+      <input class="form-control" name="name" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">パスワード</label>
+      <input class="form-control" name="password" required>
+    </div>
+    <div class="col-md-4">
+      <label class="form-label">権限</label>
+      <select class="form-select" name="role">
+        <option value="caregiver" selected>caregiver（一般）</option>
+        <option value="admin">admin（管理者）</option>
+      </select>
+      <div class="form-text">※ 「admin」を選ぶと管理者権限を付与します。</div>
+    </div>
+    <div class="col-12 d-flex gap-2">
+      <button class="btn btn-success">登録</button>
+      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームに戻る</a>
+    </div>
+  </form>
+  <p class="text-muted mt-2">※ 同じ名前が存在する場合は、パスワードと権限を更新します。</p>
 </div>
 {% endblock %}
-
