@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}アルバム{% endblock %}
+{% block content %}
+<div class="container py-3">
+  <div class="d-flex align-items-center mb-3">
+    <a class="btn btn-outline-secondary me-2" href="{{ url_for('home') }}">
+      🏠 ホームへ
+    </a>
+    <h3 class="m-0">アルバム</h3>
+  </div>
+
+  {% if files %}
+  <div class="row g-3">
+    {% for f in files %}
+    <div class="col-6 col-sm-4 col-md-3 col-lg-2">
+      <div class="card h-100 shadow-sm">
+        <a href="{{ url_for('static', filename='album/' ~ f) }}" target="_blank" class="text-decoration-none">
+          <img src="{{ url_for('static', filename='album/' ~ f) }}"
+               class="card-img-top" style="aspect-ratio:4/3; object-fit:cover;" alt="{{ f }}">
+        </a>
+        <div class="card-body p-2">
+          <div class="small text-muted" style="word-break:break-all">{{ f }}</div>
+          <form method="post" action="{{ url_for('album_delete') }}"
+                onsubmit="return confirm('この写真を削除しますか？');" class="mt-2">
+            <input type="hidden" name="filename" value="{{ f }}">
+            <button class="btn btn-sm btn-outline-danger w-100">削除</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <p>まだ写真がありません。</p>
+  {% endif %}
+</div>
+{% endblock %}

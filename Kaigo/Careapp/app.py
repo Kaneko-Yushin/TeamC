@@ -4,7 +4,7 @@ from flask import (
     send_from_directory, session, url_for, flash, jsonify
 )
 from functools import wraps
-import sqlite3, qrcode, io, secrets, os, json, csv, math
+import sqlite3, qrcode, io, secrets, os, json, csv, math, re
 from datetime import date, datetime
 from flask_babel import Babel
 from jinja2 import TemplateNotFound
@@ -242,6 +242,7 @@ def home():
             "<li><a href='/records'>記録一覧</a>（要ログイン）</li>"
             "<li><a href='/handover'>引継ぎ</a>（要ログイン）</li>"
             "<li><a href='/camera'>見守りカメラ</a>（要ログイン）</li>"
+            "<li><a href='/album'>アルバム</a>（要ログイン）</li>"
             "<li><a href='/users'>利用者一覧</a>（管理者）</li>"
             "<li><a href='/admin'>管理</a>（管理者）</li>"
             "</ul>"
@@ -796,12 +797,11 @@ def family_records(user_id):
     )
 
 # =========================
-# 見守りカメラ
+# 見守りカメラ / アルバム
 # =========================
 @app.get("/camera")
 @login_required
 def camera_page():
-    # テンプレが無いときのフォールバック（UIは最小限）
     return tpl("camera.html",
         _fallback_html=(
             "<h2>カメラ（簡易アップロード）</h2>"
@@ -834,20 +834,61 @@ def album_upload():
 def album_index():
     folder = os.path.join(app.root_path, "static", "album")
     os.makedirs(folder, exist_ok=True)
-    files = sorted((f for f in os.listdir(folder) if f.lower().endswith((".jpg",".jpeg",".png"))), reverse=True)
-    items = "".join(
-        f"<div style='width:160px;display:inline-block;margin:6px;text-align:center'>"
-        f"<a href='/static/album/{f}' target='_blank'><img src='/static/album/{f}' style='width:160px;height:120px;object-fit:cover;border-radius:8px'></a>"
-        f"<div class='small text-muted' style='word-break:break-all'>{f}</div></div>"
-        for f in files
-    ) or "<p>まだありません。</p>"
-    return (
-        "<div class='container py-3'>"
-        "<a class='btn btn-outline-secondary mb-3' href='/'><span>🏠</span> ホームへ</a>"
-        "<h3>アルバム</h3>"
-        f"{items}"
-        "</div>"
+    files = sorted(
+        (f for f in os.listdir(folder)
+         if f.lower().endswith((".jpg", ".jpeg", ".png"))),
+        reverse=True,
     )
+    # テンプレートがあればJinjaで、無ければ簡易HTMLで表示
+    try:
+        return render_template("album.html", files=files)
+    except TemplateNotFound:
+        items = "".join(
+            f"<div style='width:160px;display:inline-block;margin:6px;text-align:center'>"
+            f"<a href='/static/album/{f}' target='_blank'>"
+            f"<img src='/static/album/{f}' style='width:160px;height:120px;object-fit:cover;border-radius:8px'></a>"
+            f"<div class='small text-muted' style='word-break:break-all'>{f}</div>"
+            f"<form method='post' action='/album/delete' onsubmit=\"return confirm('削除しますか？');\">"
+            f"<input type='hidden' name='filename' value='{f}'/>"
+            f"<button>削除</button></form>"
+            f"</div>"
+            for f in files
+        ) or "<p>まだありません。</p>"
+        return (
+            "<div class='container py-3'>"
+            "<a class='btn btn-outline-secondary mb-3' href='/'><span>🏠</span> ホームへ</a>"
+            "<h3>アルバム</h3>"
+            f"{items}"
+            "</div>"
+        )
+
+@app.post("/album/delete")
+@admin_required   # 介護職員にも許可したい場合は @login_required に変更
+def album_delete():
+    filename = (request.form.get("filename") or "").strip()
+    # ファイル名バリデーション（英数・ハイフン・アンダー・ドットのみ）
+    if not re.fullmatch(r"[A-Za-z0-9._\-]+", filename):
+        flash("不正なファイル名です。")
+        return redirect(url_for("album_index"))
+
+    folder = os.path.join(app.root_path, "static", "album")
+    os.makedirs(folder, exist_ok=True)
+
+    target_path = os.path.abspath(os.path.join(folder, filename))
+    if not target_path.startswith(os.path.abspath(folder) + os.sep):
+        flash("不正なパスです。")
+        return redirect(url_for("album_index"))
+
+    if not os.path.exists(target_path):
+        flash("ファイルが見つかりません。")
+        return redirect(url_for("album_index"))
+
+    try:
+        os.remove(target_path)
+        flash("写真を削除しました。")
+    except Exception as e:
+        flash(f"削除に失敗しました: {e}")
+    return redirect(url_for("album_index"))
 
 # =========================
 # 雑多
