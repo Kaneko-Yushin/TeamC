@@ -1,21 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
 <h1 class="fw-bold mb-4">スタッフ一覧</h1>
+
 <div class="table-responsive">
   <table class="table table-striped align-middle">
-    <thead class="table-success"><tr><th>ID</th><th>名前</th><th>パスワード</th><th>権限</th><th>トークン</th><th>操作</th></tr></thead>
+    <thead class="table-success">
+      <tr>
+        <th>ID</th><th>名前</th><th>パスワード</th><th>権限</th><th>トークン</th>
+        <th>QR/URL</th>
+        <th>操作</th>
+      </tr>
+    </thead>
     <tbody>
       {% for s in staff_list %}
       <tr>
-        <td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.password }}</td><td>{{ s.role }}</td><td>{{ s.login_token }}</td>
-        <td><a class="btn btn-sm btn-outline-danger" href="{{ url_for('delete_staff', sid=s.id) }}" onclick="return confirm('削除しますか？');">削除</a></td>
+        <td>{{ s.id }}</td>
+        <td>{{ s.name }}</td>
+        <td>{{ s.password }}</td>
+        <td>{{ s.role }}</td>
+        <td>{{ s.login_token if s.login_token else "-" }}</td>
+        <td>
+          {% if s.login_token %}
+            {# ログインURL #}
+            {% set host = request.host.split(':')[0] %}
+            {% set login_url = 'http://' ~ host ~ ':5000/login/' ~ s.login_token %}
+            <div class="d-flex flex-wrap gap-2">
+              <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('qr_png', token=s.login_token) }}">
+                QR画像を開く
+              </a>
+              <a class="btn btn-sm btn-outline-success" target="_blank" href="{{ login_url }}">
+                ログインURLを開く
+              </a>
+              <button class="btn btn-sm btn-outline-secondary" type="button"
+                      onclick="copyToClipboard('{{ login_url }}', this)">
+                URLをコピー
+              </button>
+            </div>
+          {% else %}
+            <span class="text-muted">未発行</span>
+          {% endif %}
+        </td>
+        <td>
+          <a class="btn btn-sm btn-outline-danger"
+             href="{{ url_for('delete_staff', sid=s.id) }}"
+             onclick="return confirm('削除しますか？');">削除</a>
+        </td>
       </tr>
-      {% else %}<tr><td colspan="6" class="text-center text-muted py-3">スタッフがいません。</td></tr>{% endfor %}
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted py-3">スタッフがいません。</td></tr>
+      {% endfor %}
     </tbody>
   </table>
 </div>
+
 <div class="text-center mt-4">
   <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary">← 設定に戻る</a>
   <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">← ホームに戻る</a>
 </div>
+
+<script>
+  function copyToClipboard(text, btn){
+    navigator.clipboard.writeText(text).then(()=>{
+      const org = btn.textContent;
+      btn.textContent = 'コピーしました';
+      setTimeout(()=>btn.textContent = org, 1200);
+    });
+  }
+</script>
 {% endblock %}
