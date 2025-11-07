@@ -19,6 +19,7 @@
   <h1 class="text-center menu-title mb-4">メインメニュー</h1>
 
   <div class="row g-4">
+    <!-- 利用者一覧 -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('users_page') }}">
         <div class="menu-card p-4 text-center">
@@ -29,6 +30,7 @@
       </a>
     </div>
 
+    <!-- 記録入力 -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('add_record') }}">
         <div class="menu-card p-4 text-center">
@@ -39,6 +41,7 @@
       </a>
     </div>
 
+    <!-- 記録一覧 -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('records') }}">
         <div class="menu-card p-4 text-center">
@@ -50,6 +53,7 @@
     </div>
 
     {% if session.get('staff_role') == 'admin' %}
+    <!-- 利用者登録（管理者） -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('add_user') }}">
         <div class="menu-card p-4 text-center">
@@ -61,6 +65,7 @@
     </div>
     {% endif %}
 
+    <!-- 設定 -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('admin_page') }}">
         <div class="menu-card p-4 text-center">
@@ -71,6 +76,7 @@
       </a>
     </div>
 
+    <!-- 引継ぎボード -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('handover') }}">
         <div class="menu-card p-4 text-center">
@@ -81,18 +87,18 @@
       </a>
     </div>
 
-    <!-- ▼ 追加：見守りカメラ -->
+    <!-- 見守りカメラ -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('camera_page') }}">
         <div class="menu-card p-4 text-center">
           <div class="menu-emoji">📷</div>
           <h3 class="mt-2 mb-1 menu-title-sm">見守りカメラ</h3>
-          <p class="menu-desc mb-0">一定/ランダム間隔で自動スナップ</p>
+          <p class="menu-desc mb-0">定期撮影とアルバム保存</p>
         </div>
       </a>
     </div>
 
-    <!-- ▼ 任意：アルバム（保存先一覧） -->
+    <!-- アルバム -->
     <div class="col-12 col-md-6 col-lg-4">
       <a class="menu-link" href="{{ url_for('album_index') }}">
         <div class="menu-card p-4 text-center">
@@ -103,6 +109,18 @@
       </a>
     </div>
 
+    {% if session.get('staff_role') == 'admin' %}
+    <!-- ★ 家族アカウント管理（管理者のみ・右下の空き枠へ） -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('admin_family') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">👨‍👩‍👧</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">家族管理</h3>
+          <p class="menu-desc mb-0">家族アカウント作成・利用者と紐づけ</p>
+        </div>
+      </a>
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
