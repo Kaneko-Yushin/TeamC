@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="card mx-auto" style="max-width:480px;">
+<div class="card mx-auto" style="max-width:520px;">
   <div class="card-body">
     <h3 class="mb-3">スタッフログイン</h3>
     <form method="post">
@@ -17,6 +17,32 @@
         <a class="btn btn-outline-secondary" href="{{ url_for('home') }}">ホームに戻る</a>
       </div>
     </form>
+
+    <hr class="my-4">
+
+    <!-- 折りたたみ：スタッフ新規登録 -->
+    <p class="text-muted mb-2">はじめての方はこちら</p>
+    <button class="btn btn-success mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#signupBox">
+      スタッフ登録を開く
+    </button>
+
+    <div id="signupBox" class="collapse">
+      <form method="post" action="{{ url_for('staff_register') }}">
+        <div class="mb-3">
+          <label class="form-label">名前</label>
+          <input class="form-control" name="name" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">パスワード</label>
+          <input class="form-control" name="password" required>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-success" type="submit">登録</button>
+          <a class="btn btn-outline-secondary" data-bs-toggle="collapse" href="#signupBox">閉じる</a>
+        </div>
+        <p class="text-muted mt-2">※ 登録時の権限は caregiver（一般）です。管理者にしたい場合は、adminが変更するか <code>make_admin.py</code> を使ってください。</p>
+      </form>
+    </div>
   </div>
 </div>
 {% endblock %}
