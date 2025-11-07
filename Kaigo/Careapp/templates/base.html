@@ -7,13 +7,29 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <style>
-      body.main-wrap { background:#f5faf7; min-height:100vh; font-family:"Segoe UI", system-ui, sans-serif; }
-      .app-bar { background:#256b3f; color:#fff; padding:.75rem 1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+      body.main-wrap {
+        background:#f5faf7;
+        min-height:100vh;
+        font-family:"Segoe UI", system-ui, sans-serif;
+      }
+      .app-bar {
+        background:#256b3f;
+        color:#fff;
+        padding:.75rem 1.25rem;
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        flex-wrap:wrap;
+      }
       .app-bar a { color:#fff; text-decoration:none; }
       .app-title { font-weight:700; font-size:1.2rem; }
-      footer { text-align:center; color:#6c757d; font-size:.9rem; padding:2rem 0; }
-
-      /* 翻訳ウィジェット */
+      footer {
+        text-align:center;
+        color:#6c757d;
+        font-size:.9rem;
+        padding:2rem 0;
+      }
+      /* 翻訳ウィジェット見た目調整 */
       #google_translate_element .goog-te-gadget-simple {
         background:#ffffff;
         border-radius:10px;
@@ -27,18 +43,20 @@
   </head>
 
   <body class="main-wrap">
-    <!-- ヘッダー -->
+    <!-- ===== ヘッダー ===== -->
     <header class="app-bar">
       <a href="{{ url_for('home') }}" class="app-title">{{ _("デジタル介護日誌") }}</a>
 
       <div class="gt-wrap">
-        <!-- ★ Google翻訳ウィジェット -->
+        <!-- 🌍 Google翻訳ウィジェット -->
         <div id="google_translate_element"></div>
-        <!-- ★ 日本語に戻すボタン -->
+        <!-- 🇯🇵 日本語に戻すボタン -->
         <button class="btn btn-sm btn-light" onclick="restoreJapanese()">日本語に戻す</button>
 
         {% if session.get('staff_name') %}
-          <span class="ms-2">{{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}</span>
+          <span class="ms-2">
+            {{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}
+          </span>
           <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-2">{{ _("ログアウト") }}</a>
         {% else %}
           <a href="{{ url_for('staff_login') }}" class="btn btn-sm btn-outline-light">{{ _("ログイン") }}</a>
@@ -46,7 +64,7 @@
       </div>
     </header>
 
-    <!-- メイン -->
+    <!-- ===== メイン ===== -->
     <main class="container py-4">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -60,10 +78,10 @@
       {% block content %}{% endblock %}
     </main>
 
-    <!-- フッター -->
+    <!-- ===== フッター ===== -->
     <footer>© 2025 Digital Care Notes</footer>
 
-    <!-- Google翻訳（多言語フル対応） -->
+    <!-- ===== Google翻訳：8か国語対応 + 日本語復帰修正版 ===== -->
     <script>
       function googleTranslateElementInit() {
         new google.translate.TranslateElement({
@@ -73,24 +91,39 @@
         }, 'google_translate_element');
       }
 
-      // 日本語に戻す関数
+      // ★ 日本語に戻す処理（確実に戻る版）
       function restoreJapanese() {
-        const iframe = document.querySelector('iframe.goog-te-menu-frame');
-        if (iframe) {
-          const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
-          const jaOption = innerDoc.querySelector('.goog-te-menu2-item span.text:contains("Japanese")');
-          if (jaOption) jaOption.click();
+        try {
+          var host = location.hostname;
+          var parts = host.split('.');
+          function clearSet(domain) {
+            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + domain;
+            document.cookie = 'googtrans=/auto/ja; path=/; domain=' + domain;
+          }
+          // すべてのドメイン階層でcookie削除＆ja固定
+          for (var i = 0; i < parts.length - 1; i++) {
+            clearSet('.' + parts.slice(i).join('.'));
+          }
+          document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+          document.cookie = 'googtrans=/auto/ja; path=/';
+
+          // URLパラメータ削除
+          var url = new URL(location.href);
+          url.searchParams.delete('hl');
+          url.searchParams.delete('sl');
+          url.searchParams.delete('tl');
+          if (url.hash) url.hash = '';
+
+          // 強制リロード（翻訳解除）
+          location.replace(url.toString());
+        } catch (e) {
+          location.reload(true);
         }
-        // URLのパラメータ削除（翻訳クエリをリセット）
-        const url = new URL(window.location.href);
-        url.searchParams.delete('hl');
-        url.searchParams.delete('sl');
-        url.searchParams.delete('tl');
-        window.location.href = url.toString();
       }
     </script>
     <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
+    <!-- ===== Bootstrap JS ===== -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
