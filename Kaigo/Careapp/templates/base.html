@@ -4,50 +4,22 @@
     <meta charset="utf-8">
     <title>{{ _("デジタル介護日誌") }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Favicon -->
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
     <style>
-      body.main-wrap {
-        background: #f5faf7;
-        min-height: 100vh;
-        font-family: "Segoe UI", system-ui, sans-serif;
-      }
-      .app-bar {
-        background: #256b3f;
-        color: #fff;
-      }
-      .app-bar a {
-        color: #fff;
-        text-decoration: none;
-      }
-      .app-bar .brand {
-        font-weight: bold;
-        font-size: 1.25rem;
-      }
-      footer {
-        text-align: center;
-        color: #999;
-        padding: 1.5rem 0;
-        font-size: 0.9rem;
-      }
+      body{background:#f5faf7;min-height:100vh}
+      .app-bar{background:#256b3f;color:#fff}
+      .app-bar a{color:#fff;text-decoration:none}
+      .brand{font-weight:700;font-size:1.1rem}
+      footer{color:#8aa09a;text-align:center;padding:1.25rem 0}
     </style>
   </head>
-
-  <body class="main-wrap">
-    <!-- ナビゲーションバー -->
+  <body>
     <nav class="navbar app-bar px-3 d-flex justify-content-between align-items-center">
       <a href="{{ url_for('home') }}" class="brand">{{ _("デジタル介護日誌") }}</a>
-
-      <div class="d-flex align-items-center gap-3">
-        <div id="google_translate_element"></div>
-
+      <div class="d-flex align-items-center gap-2">
         {% if session.get("staff_name") %}
-          <span>{{ session.get("staff_name") }} ({{ session.get("staff_role") }})</span>
+          <span class="text-white-50">{{ session.get("staff_name") }} ({{ session.get("staff_role") }})</span>
           <a href="{{ url_for('logout') }}" class="btn btn-outline-light btn-sm">{{ _("ログアウト") }}</a>
         {% else %}
           <a href="{{ url_for('staff_login') }}" class="btn btn-outline-light btn-sm">{{ _("ログイン") }}</a>
@@ -55,41 +27,21 @@
       </div>
     </nav>
 
-    <!-- メインコンテンツ -->
-    <main class="container-fluid py-4">
+    <main class="container my-4">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
-          <div class="container">
-            {% for msg in messages %}
-              <div class="alert alert-info alert-dismissible fade show" role="alert">
-                {{ msg }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-              </div>
-            {% endfor %}
+          {% for msg in messages %}
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            {{ msg }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
           </div>
+          {% endfor %}
         {% endif %}
       {% endwith %}
-
-      {% block content %}
-      {% endblock %}
+      {% block content %}{% endblock %}
     </main>
 
-    <footer>
-      &copy; 2025 デジタル介護日誌
-    </footer>
-
-    <!-- Bootstrap JS -->
+    <footer>&copy; 2025 デジタル介護日誌</footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Google翻訳ウィジェット -->
-    <script type="text/javascript">
-      function googleTranslateElementInit() {
-        new google.translate.TranslateElement(
-          { pageLanguage: 'ja', includedLanguages: 'en,ja', layout: google.translate.TranslateElement.InlineLayout.SIMPLE },
-          'google_translate_element'
-        );
-      }
-    </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
   </body>
 </html>
