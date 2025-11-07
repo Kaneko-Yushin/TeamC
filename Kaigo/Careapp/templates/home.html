@@ -1,10 +1,93 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="list-group">
-  <a class="list-group-item list-group-item-action" href="{{ url_for('records') }}">記録一覧</a>
-  <a class="list-group-item list-group-item-action" href="{{ url_for('add_record') }}">記録追加</a>
-  <a class="list-group-item list-group-item-action" href="{{ url_for('handover') }}">引継ぎ</a>
-  <a class="list-group-item list-group-item-action" href="{{ url_for('users_page') }}">利用者一覧</a>
-  <a class="list-group-item list-group-item-action" href="{{ url_for('admin_page') }}">管理</a>
+<style>
+  .menu-wrap{max-width:1200px;margin:0 auto}
+  .menu-title{font-weight:800;letter-spacing:.08em;color:#173d2a}
+  .menu-card{
+    background:#fff;border:none;border-radius:18px;
+    box-shadow:0 12px 32px rgba(0,0,0,.08);
+    transition:transform .15s ease, box-shadow .15s ease;
+    height:100%;
+  }
+  .menu-card:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.1)}
+  .menu-emoji{font-size:52px;line-height:1}
+  .menu-title-sm{color:#134e2b}
+  .menu-desc{color:#6b7d74}
+  a.menu-link{text-decoration:none;color:inherit}
+</style>
+
+<div class="menu-wrap">
+  <h1 class="text-center menu-title mb-4">メインメニュー</h1>
+
+  <div class="row g-4">
+    <!-- Residents -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('users_page') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">🧑‍🤝‍🧑</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">Residents</h3>
+          <p class="menu-desc mb-0">登録されている利用者を確認</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 記録入力 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('add_record') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">📝</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">記録入力</h3>
+          <p class="menu-desc mb-0">食事・服薬・排泄・体調など</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 記録一覧 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('records') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">📖</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">記録一覧</h3>
+          <p class="menu-desc mb-0">これまでの記録を閲覧</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 利用者登録（管理者のみ表示） -->
+    {% if session.get('staff_role') == 'admin' %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('add_user') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">➕</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">利用者登録</h3>
+          <p class="menu-desc mb-0">管理者のみ</p>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+
+    <!-- 設定 -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('admin_page') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">⚙️</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">設定</h3>
+          <p class="menu-desc mb-0">スタッフ・QR発行など</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 引継ぎボード -->
+    <div class="col-12 col-md-6 col-lg-4">
+      <a class="menu-link" href="{{ url_for('handover') }}">
+        <div class="menu-card p-4 text-center">
+          <div class="menu-emoji">🗂️</div>
+          <h3 class="mt-2 mb-1 menu-title-sm">引継ぎボード</h3>
+          <p class="menu-desc mb-0">当日の申し送り・シフト別</p>
+        </div>
+      </a>
+    </div>
+  </div>
 </div>
 {% endblock %}
