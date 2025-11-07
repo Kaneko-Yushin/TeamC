@@ -1,28 +1,34 @@
-import sqlite3
-import sys
+# make_admin.py
+import os, sys, sqlite3
 
-DB_PATH = "care.db"
+APP_ROOT = os.path.dirname(__file__)
+DB_PATH = os.environ.get("DB_PATH") or os.path.join(APP_ROOT, "care.db")
 
 def main():
     if len(sys.argv) < 2:
-        print("使い方: python make_admin.py <スタッフ名>")
-        sys.exit(1)
-
+        print("使い方: python make_admin.py <スタッフ名> [パスワード]")
+        return
     name = sys.argv[1]
+    password = sys.argv[2] if len(sys.argv) >= 3 else "admin"
 
     conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-
-    # レコードがなければ作る（パスワード無しのアカウント）
-    c.execute("SELECT id FROM staff WHERE name=?", (name,))
-    row = c.fetchone()
-    if row:
-        c.execute("UPDATE staff SET role='admin' WHERE id=?", (row[0],))
-    else:
-        c.execute("INSERT INTO staff(name, password, role, login_token) VALUES(?, NULL, 'admin', NULL)", (name,))
-    conn.commit()
-    conn.close()
-    print(f"OK: {name} を管理者に設定しました。")
+    try:
+        cur = conn.cursor()
+        cur.execute("PRAGMA foreign_keys=ON;")
+        cur.execute("SELECT id FROM staff WHERE name=?", (name,))
+        row = cur.fetchone()
+        if row:
+            cur.execute("UPDATE staff SET role='admin' WHERE name=?", (name,))
+            print(f"[OK] 既存スタッフ「{name}」を admin に昇格")
+        else:
+            cur.execute(
+                "INSERT INTO staff(name, password, role) VALUES(?,?,?)",
+                (name, password, "admin"),
+            )
+            print(f"[OK] 新規に admin を作成: {name} / {password}")
+        conn.commit()
+    finally:
+        conn.close()
 
 if __name__ == "__main__":
     main()

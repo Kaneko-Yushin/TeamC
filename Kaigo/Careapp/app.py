@@ -53,12 +53,14 @@ def _load_json_translations():
     return data
 
 TRANSLATIONS = _load_json_translations()
+
 def _t(key, **kwargs):
     s = TRANSLATIONS.get(get_locale(), {}).get(key, key)
     if kwargs:
         try: s = s % kwargs
         except Exception: pass
     return s
+
 _ = _t
 app.jinja_env.globals.update(_=_, get_locale=get_locale)
 
@@ -133,7 +135,7 @@ def init_db():
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_handover_date ON handover(h_date, shift)")
         conn.commit()
-    # 初回管理者
+    # 初回管理者の自動作成
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM staff WHERE role='admin'")
@@ -189,7 +191,7 @@ def home():
             "<a href='/users'>利用者</a></p>"
         )
 
-# スタッフ
+# スタッフ登録/ログイン
 @app.route("/staff_register", methods=["GET","POST"])
 def staff_register():
     if request.method == "POST":
@@ -238,7 +240,31 @@ def logout():
 def admin_page():
     return render_template("admin.html")
 
-# スタッフ管理
+# === 追加: 管理画面からスタッフ登録（admin専用） ===
+@app.post("/admin/staff/add")
+@admin_required
+def admin_staff_add():
+    name = (request.form.get("name") or "").strip()
+    password = (request.form.get("password") or "").strip()
+    role = (request.form.get("role") or "caregiver").strip()
+    if not name or not password:
+        flash("名前とパスワードを入力してください。")
+        return redirect(url_for("admin_page"))
+    with get_connection() as conn:
+        c = conn.cursor()
+        try:
+            c.execute("INSERT INTO staff(name, password, role) VALUES (?,?,?)",
+                      (name, password, role))
+            conn.commit()
+            flash(f"スタッフ「{name}」を登録しました（role={role}）。")
+        except sqlite3.IntegrityError:
+            c.execute("UPDATE staff SET password=?, role=? WHERE name=?",
+                      (password, role, name))
+            conn.commit()
+            flash(f"既存スタッフ「{name}」の情報を更新しました（role={role}）。")
+    return redirect(url_for("admin_page"))
+
+# スタッフ一覧・削除・QR
 @app.get("/staff_list")
 @admin_required
 def staff_list():
