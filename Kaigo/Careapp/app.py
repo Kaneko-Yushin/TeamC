@@ -4,7 +4,7 @@ from flask import (
     send_from_directory, session, url_for, flash, jsonify
 )
 from functools import wraps
-import sqlite3, qrcode, io, secrets, os, json, csv, math, re
+import sqlite3, qrcode, io, secrets, os, json, csv, math, re, glob
 from datetime import date, datetime
 from flask_babel import Babel
 from jinja2 import TemplateNotFound
@@ -159,6 +159,12 @@ def init_db():
           user_id INTEGER NOT NULL,
           UNIQUE(family_name, user_id)
         )""")
+        # 設定（キー/値）
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS settings (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        )""")
         # インデックス
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_user_id ON records(user_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC)")
@@ -178,6 +184,29 @@ def init_db():
 
 # 初期化
 init_db()
+
+# 設定ヘルパ
+def get_setting(key: str, default: str|None=None) -> str|None:
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT value FROM settings WHERE key=?", (key,))
+        r = cur.fetchone()
+    return (r and r.get("value")) or default
+
+def set_setting(key: str, value: str) -> None:
+    with get_connection() as conn:
+        cur = conn.cursor()
+        cur.execute("""
+        INSERT INTO settings(key, value) VALUES(?, ?)
+        ON CONFLICT(key) DO UPDATE SET value=excluded.value
+        """, (key, value))
+        conn.commit()
+
+def get_int(key: str, default: int) -> int:
+    try:
+        return int(get_setting(key, str(default)))
+    except Exception:
+        return default
 
 # =========================
 # 認可
@@ -323,15 +352,19 @@ def admin_page():
         _fallback_html=(
             "<h2>管理</h2>"
             "<form method='post' action='/admin/staff/add'>"
-            "スタッフ名:<input name='name' required>"
-            " パスワード:<input name='password' required type='password'>"
-            " 役割:<select name='role'><option value='caregiver'>caregiver</option>"
-            "<option value='admin'>admin</option></select>"
-            " <button>登録/更新</button></form>"
-            "<p><a href='/staff_list'>スタッフ一覧</a> | "
+            "スタッフ名:<input name='name' required> "
+            "パスワード:<input name='password' required type='password'> "
+            "役割:<select name='role'><option value='caregiver'>caregiver</option>"
+            "<option value='admin'>admin</option></select> "
+            "<button>登録/更新</button></form>"
+            "<p>"
+            "<a href='/staff_list'>スタッフ一覧</a> | "
             "<a href='/generate_qr'>QR生成</a> | "
             "<a href='/qr_links'>QRリンク一覧</a> | "
-            "<a href='/'>ホームへ</a></p>"
+            "<a href='/admin/camera'>見守りカメラ設定</a> | "
+            "<a href='/admin/family'>家族アカウント管理</a> | "
+            "<a href='/'>ホームへ</a>"
+            "</p>"
         )
     )
 
@@ -434,7 +467,6 @@ def qr_png(token):
 @app.get("/qr_links")
 @admin_required
 def qr_links():
-    # 既発行トークンのダイレクトログインURL一覧（要管理者）
     host = request.host.split(":")[0]
     with get_connection() as conn:
         c = conn.cursor()
@@ -708,7 +740,7 @@ def api_handover():
     return jsonify({"handover": rows})
 
 # =========================
-# 家族向け
+# 家族向け（閲覧）
 # =========================
 @app.route("/family_login", methods=["GET","POST"])
 def family_login():
@@ -797,6 +829,104 @@ def family_records(user_id):
     )
 
 # =========================
+# 家族アカウント管理（管理者専用）
+# =========================
+@app.get("/admin/family")
+@admin_required
+def admin_family():
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT id, name, role FROM family ORDER BY id")
+        families = c.fetchall()
+        c.execute("SELECT id, name FROM users ORDER BY id")
+        users = c.fetchall()
+        c.execute("SELECT family_name, user_id FROM family_map ORDER BY id DESC")
+        maps = c.fetchall()
+    return tpl("admin_family.html", families=families, users=users, maps=maps,
+        _fallback_html=(
+            "<h2>家族アカウント管理</h2>"
+            "<h3>アカウント作成</h3>"
+            "<form method='post' action='/admin/family/add'>"
+            "名前:<input name='name' required> "
+            "パスワード:<input name='password' type='password' required> "
+            "<button>作成</button></form>"
+            "<h3 class='mt-3'>利用者との紐づけ</h3>"
+            "<form method='post' action='/admin/family/map'>家族:"
+            "<select name='family_name'>{fopts}</select> 利用者:"
+            "<select name='user_id'>{uopts}</select> <button>紐づけ</button></form>"
+            "<h4>現在の紐づけ</h4><ul>{maps}</ul>"
+            "<p><a href='/admin'>管理へ</a></p>"
+        ).format(
+            fopts="".join(f"<option>{f['name']}</option>" for f in families) or "<option>(なし)</option>",
+            uopts="".join(f"<option value='{u['id']}'>{u['name']}</option>" for u in users) or "<option>(なし)</option>",
+            maps="".join(f"<li>{m['family_name']} → user_id {m['user_id']}</li>" for m in maps) or "<li>(なし)</li>"
+        )
+    )
+
+@app.post("/admin/family/add")
+@admin_required
+def admin_family_add():
+    name = (request.form.get("name") or "").strip()
+    password = (request.form.get("password") or "").strip()
+    if not name or not password:
+        flash("名前・パスワードは必須です。")
+        return redirect(url_for("admin_family"))
+    with get_connection() as conn:
+        c = conn.cursor()
+        try:
+            c.execute("INSERT INTO family(name, password, role) VALUES(?,?,?)", (name, password, "family"))
+            conn.commit()
+            flash("家族アカウントを作成しました。")
+        except sqlite3.IntegrityError:
+            flash("同名の家族アカウントが既にあります。")
+    return redirect(url_for("admin_family"))
+
+@app.post("/admin/family/map")
+@admin_required
+def admin_family_map():
+    family_name = (request.form.get("family_name") or "").strip()
+    user_id = request.form.get("user_id")
+    if not family_name or not user_id:
+        flash("家族と利用者を選択してください。")
+        return redirect(url_for("admin_family"))
+    with get_connection() as conn:
+        c = conn.cursor()
+        try:
+            c.execute("INSERT INTO family_map(family_name, user_id) VALUES(?,?)", (family_name, user_id))
+            conn.commit()
+            flash("紐づけしました。")
+        except sqlite3.IntegrityError:
+            flash("すでに紐づけされています。")
+    return redirect(url_for("admin_family"))
+
+@app.post("/admin/family/unmap")
+@admin_required
+def admin_family_unmap():
+    family_name = (request.form.get("family_name") or "").strip()
+    user_id = request.form.get("user_id")
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("DELETE FROM family_map WHERE family_name=? AND user_id=?", (family_name, user_id))
+        conn.commit()
+    flash("紐づけを解除しました。")
+    return redirect(url_for("admin_family"))
+
+@app.post("/admin/family/delete/<int:fid>")
+@admin_required
+def admin_family_delete(fid):
+    with get_connection() as conn:
+        c = conn.cursor()
+        # 紐づけも一緒に削除
+        c.execute("SELECT name FROM family WHERE id=?", (fid,))
+        row = c.fetchone()
+        if row:
+            c.execute("DELETE FROM family_map WHERE family_name=?", (row["name"],))
+        c.execute("DELETE FROM family WHERE id=?", (fid,))
+        conn.commit()
+    flash("家族アカウントを削除しました。")
+    return redirect(url_for("admin_family"))
+
+# =========================
 # 見守りカメラ / アルバム
 # =========================
 @app.get("/camera")
@@ -813,6 +943,64 @@ def camera_page():
         )
     )
 
+# 管理：見守りカメラ設定（管理者のみ）
+@app.route("/admin/camera", methods=["GET","POST"])
+@admin_required
+def admin_camera_settings():
+    # デフォルト値
+    defaults = {
+        "camera.mode": "fixed",           # fixed or random
+        "camera.interval_sec": "300",     # 固定秒
+        "camera.random_min_sec": "120",   # ランダム最小
+        "camera.random_max_sec": "600",   # ランダム最大
+        "camera.auto_prune_max_files": "500"  # アルバム上限枚数（古い順に削除）
+    }
+    if request.method == "POST":
+        for k in defaults:
+            v = (request.form.get(k) or defaults[k]).strip()
+            set_setting(k, v)
+        flash("見守りカメラ設定を保存しました。")
+        return redirect(url_for("admin_camera_settings"))
+
+    # 表示用に現在値を集める
+    vals = {k: get_setting(k, defaults[k]) for k in defaults}
+    return tpl("admin_camera.html", settings=vals,
+        _fallback_html=(
+            "<h2>見守りカメラ設定</h2>"
+            "<form method='post'>"
+            "モード:"
+            "<select name='camera.mode'>"
+            f"<option value='fixed' {'selected' if vals['camera.mode']=='fixed' else ''}>固定間隔</option>"
+            f"<option value='random' {'selected' if vals['camera.mode']=='random' else ''}>ランダム間隔</option>"
+            "</select><br>"
+            "固定間隔(秒): <input name='camera.interval_sec' type='number' min='10' value='{fi}'><br>"
+            "ランダム最小(秒): <input name='camera.random_min_sec' type='number' min='10' value='{rmin}'><br>"
+            "ランダム最大(秒): <input name='camera.random_max_sec' type='number' min='10' value='{rmax}'><br>"
+            "アルバム上限(枚): <input name='camera.auto_prune_max_files' type='number' min='1' value='{maxf}'><br>"
+            "<button>保存</button></form>"
+            "<p><a href='/admin'>管理へ</a></p>"
+        ).format(
+            fi=vals["camera.interval_sec"],
+            rmin=vals["camera.random_min_sec"],
+            rmax=vals["camera.random_max_sec"],
+            maxf=vals["camera.auto_prune_max_files"],
+        )
+    )
+
+# クライアント向け設定API（フロントJSで参照可）
+@app.get("/api/camera/config")
+@login_required
+def api_camera_config():
+    mode = get_setting("camera.mode", "fixed")
+    cfg = {
+        "mode": mode,
+        "interval_sec": get_int("camera.interval_sec", 300),
+        "random_min_sec": get_int("camera.random_min_sec", 120),
+        "random_max_sec": get_int("camera.random_max_sec", 600),
+        "auto_prune_max_files": get_int("camera.auto_prune_max_files", 500),
+    }
+    return jsonify(cfg)
+
 @app.post("/album/upload")
 @login_required
 def album_upload():
@@ -825,8 +1013,21 @@ def album_upload():
     folder = os.path.join(app.root_path, "static", "album")
     os.makedirs(folder, exist_ok=True)
     name = f"cap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{secrets.token_hex(4)}.jpg"
-    with open(os.path.join(folder, name), "wb") as out:
+    path = os.path.join(folder, name)
+    with open(path, "wb") as out:
         out.write(data)
+
+    # オート・プリune（設定上限を超えたら古い順に削除）
+    max_files = get_int("camera.auto_prune_max_files", 500)
+    files = sorted(
+        glob.glob(os.path.join(folder, "*.*")),
+        key=os.path.getmtime
+    )
+    if len(files) > max_files:
+        for old in files[:len(files)-max_files]:
+            try: os.remove(old)
+            except Exception: pass
+
     return "ok", 200
 
 @app.get("/album")
@@ -839,7 +1040,6 @@ def album_index():
          if f.lower().endswith((".jpg", ".jpeg", ".png"))),
         reverse=True,
     )
-    # テンプレートがあればJinjaで、無ければ簡易HTMLで表示
     try:
         return render_template("album.html", files=files)
     except TemplateNotFound:
@@ -866,7 +1066,6 @@ def album_index():
 @admin_required   # 介護職員にも許可したい場合は @login_required に変更
 def album_delete():
     filename = (request.form.get("filename") or "").strip()
-    # ファイル名バリデーション（英数・ハイフン・アンダー・ドットのみ）
     if not re.fullmatch(r"[A-Za-z0-9._\-]+", filename):
         flash("不正なファイル名です。")
         return redirect(url_for("album_index"))
