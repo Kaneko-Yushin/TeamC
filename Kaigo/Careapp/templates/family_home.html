@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-3">ご家族メニュー</h3>
+<div class="row g-3">
+  {% for u in users %}
+  <div class="col-12 col-md-6 col-lg-4">
+    <a href="{{ url_for('family_records', user_id=u.id) }}" class="text-decoration-none">
+      <div class="p-3" style="border-radius:14px;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.06);">
+        <div class="d-flex justify-content-between">
+          <strong>{{ u.name }}</strong>
+          <span class="text-muted">居室 {{ u.room_number or '-' }}</span>
+        </div>
+        <div class="text-muted mt-1">最近の記録を見る</div>
+      </div>
+    </a>
+  </div>
+  {% else %}
+    <p class="text-muted">閲覧可能な利用者がまだ紐付けられていません。</p>
+  {% endfor %}
+</div>
+<div class="mt-4">
+  <a class="btn btn-outline-secondary" href="{{ url_for('family_logout') }}">ログアウト</a>
+</div>
+{% endblock %}

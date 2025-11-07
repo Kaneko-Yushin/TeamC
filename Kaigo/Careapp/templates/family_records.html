@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="fw-bold mb-3">最近の記録</h3>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead class="table-success"><tr>
+      <th>日時</th><th>食事</th><th>服薬</th><th>排泄</th><th>体調</th>
+    </tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.created_at }}</td>
+        <td>{{ r.meal or "-" }}</td>
+        <td>{{ r.medication or "-" }}</td>
+        <td>{{ r.toilet or "-" }}</td>
+        <td>{{ r.condition or "-" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center text-muted py-3">記録がありません。</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<a class="btn btn-outline-secondary mt-3" href="{{ url_for('family_home') }}">← 家族メニューに戻る</a>
+{% endblock %}

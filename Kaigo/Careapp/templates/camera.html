@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card mx-auto" style="max-width:720px;">
+  <div class="card-body">
+    <h3 class="fw-bold mb-3">見守りカメラ（同意済み共用部）</h3>
+    <p class="text-muted">※ 施設の規程・掲示・同意に基づき運用してください。音声は収集しません。</p>
+
+    <div class="row g-3">
+      <div class="col-md-6"><label class="form-label">撮影時間帯（開始）</label><input type="time" id="tStart" class="form-control" value="09:00"></div>
+      <div class="col-md-6"><label class="form-label">撮影時間帯（終了）</label><input type="time" id="tEnd" class="form-control" value="18:00"></div>
+      <div class="col-md-6"><label class="form-label">最短間隔（秒）</label><input type="number" id="minS" class="form-control" value="60" min="10"></div>
+      <div class="col-md-6"><label class="form-label">最長間隔（秒）</label><input type="number" id="maxS" class="form-control" value="180" min="10"></div>
+    </div>
+
+    <div class="mt-3 d-flex gap-2">
+      <button id="btnStart" class="btn btn-success">開始</button>
+      <button id="btnStop" class="btn btn-outline-danger" disabled>停止</button>
+    </div>
+
+    <video id="v" autoplay playsinline class="mt-3 w-100" style="max-height:320px;background:#000;border-radius:10px;"></video>
+    <canvas id="c" class="d-none"></canvas>
+  </div>
+</div>
+
+<script>
+const v = document.getElementById('v');
+const c = document.getElementById('c');
+let stream = null, timer = null, running = false;
+
+function inWindow() {
+  const s = document.getElementById('tStart').value;
+  const e = document.getElementById('tEnd').value;
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const cur = hh + ':' + mm;
+  return (s <= cur && cur <= e);
+}
+
+async function snapAndUpload() {
+  if (!running || !inWindow()) return scheduleNext();
+  const w = v.videoWidth, h = v.videoHeight;
+  if (!w || !h) return scheduleNext();
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.drawImage(v, 0, 0, w, h);
+  const blob = await new Promise(res => c.toBlob(res, 'image/jpeg', 0.8));
+  const fd = new FormData();
+  fd.append('photo', blob, `snap_${Date.now()}.jpg`);
+  fetch('{{ url_for("album_upload") }}', { method:'POST', body: fd })
+    .catch(console.error)
+    .finally(scheduleNext);
+}
+
+function scheduleNext() {
+  if (!running) return;
+  const min = Number(document.getElementById('minS').value || 60);
+  const max = Number(document.getElementById('maxS').value || 180);
+  const delay = Math.floor(min*1000 + Math.random()*(max-min)*1000);
+  timer = setTimeout(snapAndUpload, delay);
+}
+
+document.getElementById('btnStart').onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    v.srcObject = stream;
+    running = true;
+    document.getElementById('btnStart').disabled = true;
+    document.getElementById('btnStop').disabled = false;
+    scheduleNext();
+  } catch (e) { alert('カメラが利用できません: ' + e); }
+};
+document.getElementById('btnStop').onclick = () => {
+  running = false; clearTimeout(timer);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  document.getElementById('btnStart').disabled = false;
+  document.getElementById('btnStop').disabled = true;
+};
+</script>
+{% endblock %}

@@ -1,69 +1,115 @@
-
 <!doctype html>
 <html lang="{{ get_locale() }}">
   <head>
     <meta charset="utf-8">
     <title>{{ _("デジタル介護日誌") }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Favicon -->
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- PWA -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#256b3f">
+
     <style>
-      body.main-wrap {
-        background:#f5faf7;
-        min-height:100vh;
-        font-family:"Segoe UI", system-ui, sans-serif;
-      }
-      .app-bar {
-        background:#256b3f;
-        color:#fff;
-        padding:.75rem 1.25rem;
-        display:flex;
-        align-items:center;
-        justify-content:space-between;
-        flex-wrap:wrap;
-      }
-      .app-bar a { color:#fff; text-decoration:none; }
-      .app-title { font-weight:700; font-size:1.2rem; }
-      footer {
-        text-align:center;
-        color:#6c757d;
-        font-size:.9rem;
-        padding:2rem 0;
-      }
-      /* 翻訳ウィジェット見た目調整 */
+      :root { --app-green:#256b3f; }
+      body.main-wrap { background:#f5faf7; min-height:100vh; font-family:"Segoe UI", system-ui, -apple-system, sans-serif; }
+      .app-bar { background:var(--app-green); }
+      .navbar-brand { font-weight:700; letter-spacing:.02em; }
+      .nav-link, .navbar-brand { color:#fff !important; }
+      .navbar .dropdown-menu { min-width:14rem; }
+      .badge-role { background:#ffffff1a; color:#fff; border:1px solid #ffffff33; }
+      footer { text-align:center; color:#6c757d; font-size:.9rem; padding:2rem 0; }
+
+      /* 翻訳ウィジェットの見た目 */
       #google_translate_element .goog-te-gadget-simple {
-        background:#ffffff;
-        border-radius:10px;
-        padding:2px 6px;
-        border:none;
+        background:#ffffff; border-radius:10px; padding:2px 6px; border:none;
       }
       #google_translate_element img.goog-te-gadget-icon { display:none; }
       #google_translate_element .goog-te-menu-value { color:#1f2937; }
+
+      /* スクロール時のヘッダー余白調整（モバイル） */
       .gt-wrap { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
     </style>
   </head>
 
   <body class="main-wrap">
-    <!-- ===== ヘッダー ===== -->
-    <header class="app-bar">
-      <a href="{{ url_for('home') }}" class="app-title">{{ _("デジタル介護日誌") }}</a>
+    <!-- ===== ヘッダー／ナビゲーション ===== -->
+    <nav class="navbar navbar-expand-lg app-bar">
+      <div class="container">
+        <a class="navbar-brand" href="{{ url_for('home') }}">{{ _("デジタル介護日誌") }}</a>
 
-      <div class="gt-wrap">
-        <!-- 🌍 Google翻訳ウィジェット -->
-        <div id="google_translate_element"></div>
-        <!-- 🇯🇵 日本語に戻すボタン -->
-        <button class="btn btn-sm btn-light" onclick="restoreJapanese()">日本語に戻す</button>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav" aria-controls="topNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon" style="filter:invert(1);"></span>
+        </button>
 
-        {% if session.get('staff_name') %}
-          <span class="ms-2">
-            {{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}
-          </span>
-          <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-2">{{ _("ログアウト") }}</a>
-        {% else %}
-          <a href="{{ url_for('staff_login') }}" class="btn btn-sm btn-outline-light">{{ _("ログイン") }}</a>
-        {% endif %}
+        <div class="collapse navbar-collapse" id="topNav">
+          <!-- 左側メニュー -->
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            {% if session.get('staff_name') %}
+              <!-- 職員メニュー -->
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('add_record') }}">📝 {{ _("記録入力") }}</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('records') }}">📖 {{ _("記録一覧") }}</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('handover') }}">🗂️ {{ _("引継ぎ") }}</a></li>
+
+              {% if session.get('staff_role') == 'admin' %}
+                <!-- 管理者だけ -->
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">⚙️ {{ _("管理") }}</a>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('admin_page') }}">設定（管理画面）</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('users_page') }}">利用者一覧</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('add_user') }}">利用者登録</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('staff_list') }}">スタッフ一覧</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('generate_qr') }}">QRコード発行</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="{{ url_for('camera_page') }}">見守りカメラ</a></li>
+                  </ul>
+                </li>
+              {% endif %}
+            {% endif %}
+
+            {% if session.get('family_name') %}
+              <!-- 家族メニュー -->
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('family_home') }}">🏠 家族メニュー</a></li>
+            {% endif %}
+          </ul>
+
+          <!-- 右側：翻訳・ログイン関連 -->
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="gt-wrap">
+              <div id="google_translate_element"></div>
+              <button class="btn btn-sm btn-light" onclick="restoreJapanese()">日本語に戻す</button>
+            </div>
+
+            {% if session.get('staff_name') %}
+              <span class="badge rounded-pill badge-role ms-1">
+                {{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}
+              </span>
+              <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-1">{{ _("ログアウト") }}</a>
+            {% elif session.get('family_name') %}
+              <span class="badge rounded-pill badge-role ms-1">{{ session['family_name'] }} (family)</span>
+              <a href="{{ url_for('family_logout') }}" class="btn btn-sm btn-outline-light ms-1">ログアウト</a>
+            {% else %}
+              <div class="dropdown">
+                <a class="btn btn-sm btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  ログイン
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  <li><a class="dropdown-item" href="{{ url_for('staff_login') }}">職員ログイン</a></li>
+                  <li><a class="dropdown-item" href="{{ url_for('family_login') }}">家族ログイン</a></li>
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
-    </header>
+    </nav>
 
     <!-- ===== メイン ===== -->
     <main class="container py-4">
@@ -76,13 +122,14 @@
           </div>
         {% endif %}
       {% endwith %}
+
       {% block content %}{% endblock %}
     </main>
 
     <!-- ===== フッター ===== -->
     <footer>© 2025 Digital Care Notes</footer>
 
-    <!-- ===== Google翻訳：8か国語対応 + 日本語復帰修正版 ===== -->
+    <!-- ===== Google翻訳：8言語対応 + 日本語復帰（確実版） ===== -->
     <script>
       function googleTranslateElementInit() {
         new google.translate.TranslateElement({
@@ -92,7 +139,7 @@
         }, 'google_translate_element');
       }
 
-      // ★ 日本語に戻す処理（確実に戻る版）
+      // 日本語に戻す：googtrans を全階層でリセットし /auto/ja を設定してリロード
       function restoreJapanese() {
         try {
           var host = location.hostname;
@@ -101,30 +148,32 @@
             document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + domain;
             document.cookie = 'googtrans=/auto/ja; path=/; domain=' + domain;
           }
-          // すべてのドメイン階層でcookie削除＆ja固定
-          for (var i = 0; i < parts.length - 1; i++) {
+          for (var i=0; i<parts.length-1; i++) {
             clearSet('.' + parts.slice(i).join('.'));
           }
+          // ドメイン指定なし（ローカルでも効く）
           document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
           document.cookie = 'googtrans=/auto/ja; path=/';
 
-          // URLパラメータ削除
+          // URLの翻訳パラメータを削除
           var url = new URL(location.href);
-          url.searchParams.delete('hl');
-          url.searchParams.delete('sl');
-          url.searchParams.delete('tl');
+          url.searchParams.delete('hl'); url.searchParams.delete('sl'); url.searchParams.delete('tl');
           if (url.hash) url.hash = '';
 
-          // 強制リロード（翻訳解除）
           location.replace(url.toString());
-        } catch (e) {
-          location.reload(true);
-        }
+        } catch(e) { location.reload(true); }
       }
     </script>
     <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-    <!-- ===== Bootstrap JS ===== -->
+    <!-- PWA: Service Worker 登録 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js').catch(console.error);
+      }
+    </script>
+
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

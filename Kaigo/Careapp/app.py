@@ -99,6 +99,7 @@ def get_connection():
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
+        # 既存テーブル
         c.execute("""
         CREATE TABLE IF NOT EXISTS users(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,11 +132,27 @@ def init_db():
           staff TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
+        # 追加：家族向け
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS family (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL UNIQUE,
+          password TEXT NOT NULL,
+          role TEXT NOT NULL DEFAULT 'family'
+        )""")
+        c.execute("""
+        CREATE TABLE IF NOT EXISTS family_map (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          family_name TEXT NOT NULL,
+          user_id INTEGER NOT NULL,
+          UNIQUE(family_name, user_id)
+        )""")
+        # インデックス
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_user_id ON records(user_id)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC)")
         c.execute("CREATE INDEX IF NOT EXISTS idx_handover_date ON handover(h_date, shift)")
         conn.commit()
-    # 初回管理者の自動作成
+    # 初回管理者
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM staff WHERE role='admin'")
@@ -144,12 +161,10 @@ def init_db():
                       ("admin","admin","admin"))
             conn.commit()
 
-if not os.path.exists(DB_PATH):
-    init_db()
-else:
-    init_db()
+# 初期化（既存DBでも不足テーブルを作る）
+init_db()
 
-# ===== 認可 =====
+# ===== 認可（職員） =====
 def login_required(f):
     @wraps(f)
     def w(*a, **kw):
@@ -167,6 +182,16 @@ def admin_required(f):
         return f(*a, **kw)
     return w
 
+# ===== 認可（家族） =====
+def family_login_required(f):
+    @wraps(f)
+    def w(*a, **kw):
+        if session.get("family_name") is None:
+            flash("家族ログインが必要です。")
+            return redirect(url_for("family_login"))
+        return f(*a, **kw)
+    return w
+
 # ===== 共通 =====
 def paginate(total: int, page: int, per_page: int):
     pages = max(1, math.ceil(total / per_page))
@@ -177,7 +202,7 @@ def paginate(total: int, page: int, per_page: int):
         "prev_page": page-1 if page>1 else None, "next_page": page+1 if page<pages else None,
     }
 
-# ===== 画面 =====
+# ===== 画面：共通 =====
 @app.get("/")
 def home():
     try:
@@ -186,12 +211,13 @@ def home():
         return (
             "<h1>デジタル介護日誌</h1>"
             "<p><a href='/staff_login'>スタッフログイン</a> | "
+            "<a href='/family_login'>家族ログイン</a> | "
             "<a href='/records'>記録</a> | "
             "<a href='/handover'>引継ぎ</a> | "
             "<a href='/users'>利用者</a></p>"
         )
 
-# スタッフ登録/ログイン
+# ===== スタッフ：登録/ログイン/設定など =====
 @app.route("/staff_register", methods=["GET","POST"])
 def staff_register():
     if request.method == "POST":
@@ -223,6 +249,7 @@ def staff_login():
             c.execute("SELECT name, role FROM staff WHERE name=? AND password=?", (name,password))
             row = c.fetchone()
         if row:
+            session.clear()
             session["staff_name"], session["staff_role"] = row["name"], row["role"]
             flash(_("%(n)s さんでログインしました。", n=row["name"]))
             return redirect(url_for("home"))
@@ -240,7 +267,7 @@ def logout():
 def admin_page():
     return render_template("admin.html")
 
-# === 追加: 管理画面からスタッフ登録（admin専用） ===
+# 管理画面からスタッフ登録（既存）
 @app.post("/admin/staff/add")
 @admin_required
 def admin_staff_add():
@@ -326,11 +353,12 @@ def login_by_qr(token):
         row = c.fetchone()
     if not row:
         return _("無効なQRコードです。"), 403
+    session.clear()
     session["staff_name"], session["staff_role"] = row["name"], row["role"]
     flash(_("%(n)s さんでログインしました。", n=row["name"]))
     return redirect(url_for("home"))
 
-# 利用者
+# ===== 利用者 =====
 @app.get("/users")
 @admin_required
 def users_page():
@@ -370,7 +398,7 @@ def delete_user(user_id):
     flash(_("利用者を削除しました。"))
     return redirect(url_for("users_page"))
 
-# 記録
+# ===== 記録 =====
 @app.get("/records")
 @login_required
 def records():
@@ -455,7 +483,7 @@ def add_record():
         return redirect(url_for("records"))
     return render_template("add_record.html", users=users)
 
-# 引継ぎ
+# ===== 引継ぎ =====
 @app.route("/handover", methods=["GET","POST"])
 @login_required
 def handover():
@@ -506,7 +534,88 @@ def api_handover():
         rows = c.fetchall()
     return jsonify({"handover": rows})
 
-# 雑多
+# ===== 家族向け =====
+@app.route("/family_login", methods=["GET","POST"])
+def family_login():
+    if request.method == "POST":
+        name = request.form.get("name","").strip()
+        password = request.form.get("password","").strip()
+        with get_connection() as conn:
+            c = conn.cursor()
+            c.execute("SELECT name FROM family WHERE name=? AND password=?", (name, password))
+            row = c.fetchone()
+        if row:
+            session.clear()
+            session["family_name"] = row["name"]
+            flash(f"{row['name']} さんで家族ログインしました。")
+            return redirect(url_for("family_home"))
+        flash("名前またはパスワードが間違っています。")
+    return render_template("family_login.html")
+
+@app.get("/family_logout")
+def family_logout():
+    session.pop("family_name", None)
+    flash("家族ログアウトしました。")
+    return redirect(url_for("home"))
+
+@app.get("/family")
+@family_login_required
+def family_home():
+    fam = session["family_name"]
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("""
+          SELECT u.id, u.name, u.room_number
+            FROM users u
+            JOIN family_map m ON m.user_id = u.id
+           WHERE m.family_name = ?
+           ORDER BY u.id
+        """, (fam,))
+        users = c.fetchall()
+    return render_template("family_home.html", users=users)
+
+@app.get("/family/records/<int:user_id>")
+@family_login_required
+def family_records(user_id):
+    fam = session["family_name"]
+    with get_connection() as conn:
+        c = conn.cursor()
+        c.execute("SELECT 1 FROM family_map WHERE family_name=? AND user_id=?", (fam, user_id))
+        if not c.fetchone():
+            return "閲覧権限がありません。", 403
+        c.execute("""
+          SELECT r.created_at, r.meal, r.medication, r.toilet, r.condition
+            FROM records r
+           WHERE r.user_id = ?
+           ORDER BY r.id DESC
+           LIMIT 100
+        """, (user_id,))
+        rows = c.fetchall()
+    return render_template("family_records.html", rows=rows)
+
+# ===== 見守りカメラ（同意・共用部・施設端末想定） =====
+@app.get("/camera")
+@login_required
+def camera_page():
+    return render_template("camera.html")
+
+@app.post("/album/upload")
+@login_required
+def album_upload():
+    f = request.files.get("photo")
+    if not f: return "no file", 400
+    if f.mimetype not in ("image/jpeg","image/png"): return "bad type", 400
+    data = f.read()
+    if len(data) > 2 * 1024 * 1024:
+        return "too large", 400
+    folder = os.path.join(app.root_path, "static", "album")
+    os.makedirs(folder, exist_ok=True)
+    name = f"cap_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{secrets.token_hex(4)}.jpg"
+    with open(os.path.join(folder, name), "wb") as out:
+        out.write(data)
+    return "ok", 200
+
+# ===== 雑多 =====
 @app.get("/favicon.ico")
 def favicon():
     ico = os.path.join(app.root_path, "static", "favicon.ico")
@@ -531,4 +640,5 @@ def not_found(e):
         return "Not Found", 404
 
 if __name__ == "__main__":
+    # PWA の Service Worker は static から配信（base.html で登録）
     app.run(host="0.0.0.0", port=5000, debug=True)

@@ -1,0 +1,12 @@
+{
+  "name": "デジタル介護日誌（家族ポータル）",
+  "short_name": "介護日誌",
+  "start_url": "/family",
+  "display": "standalone",
+  "background_color": "#f5faf7",
+  "theme_color": "#256b3f",
+  "icons": [
+    { "src": "/static/icons/icon-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "/static/icons/icon-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
