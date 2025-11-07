@@ -1,47 +1,18 @@
 {% extends "base.html" %}
-{% block body %}
-<div class="card p-3">
-  <h5 class="mb-3">{{ _('スタッフ一覧') }}</h5>
-
+{% block content %}
+<h3 class="mb-3">スタッフ一覧</h3>
+<div class="table-responsive">
   <table class="table table-striped align-middle">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>{{ _('スタッフ') }}</th>
-        <th>Role</th>
-        <th>QR</th>
-        <th>Op</th>
-      </tr>
-    </thead>
+    <thead class="table-success"><tr><th>ID</th><th>名前</th><th>パスワード</th><th>権限</th><th>トークン</th><th>操作</th></tr></thead>
     <tbody>
       {% for s in staff_list %}
-      {# s = (id, name, password, role, login_token) #}
       <tr>
-        <td>{{ s[0] }}</td>
-        <td>{{ s[1] }}</td>
-        <td>{{ s[3] or '-' }}</td>
-        <td>
-          {% if s[4] %}
-            <img src="{{ url_for('qr_png', token=s[4]) }}" alt="QR" height="64">
-          {% else %}
-            <span class="text-muted">-</span>
-          {% endif %}
-        </td>
-        <td>
-          <a class="btn btn-sm btn-danger"
-             href="{{ url_for('delete_staff', sid=s[0]) }}"
-             onclick="return confirm('{{ _('本当に削除しますか？') }}')">
-            {{ _('削除') }}
-          </a>
-        </td>
+        <td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.password }}</td><td>{{ s.role }}</td><td>{{ s.login_token }}</td>
+        <td><a class="btn btn-sm btn-outline-danger" href="{{ url_for('delete_staff', sid=s.id) }}" onclick="return confirm('削除しますか？');">削除</a></td>
       </tr>
-      {% endfor %}
+      {% else %}<tr><td colspan="6" class="text-center text-muted py-3">スタッフがいません。</td></tr>{% endfor %}
     </tbody>
   </table>
-
-  <div class="d-flex gap-2">
-    <a class="btn btn-outline-success" href="{{ url_for('generate_qr') }}">{{ _('QR発行') }}</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin_page') }}">{{ _('戻る') }}</a>
-  </div>
 </div>
+<div class="text-center mt-3"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
 {% endblock %}

@@ -1,72 +1,31 @@
-<<<<<<< HEAD
 {% extends "base.html" %}
-{% block body %}
-<div class="d-flex justify-content-between align-items-center mb-2">
-  <h5 class="m-0">{{ _('記録一覧') }}</h5>
-  <div>
-    <a class="btn btn-success" href="{{ url_for('add_record') }}">{{ _('記録追加') }}</a>
-    <a class="btn btn-outline-secondary ms-2" href="{{ url_for('home') }}">{{ _('ホームに戻る') }}</a>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">記録一覧</h3>
+  <div class="d-flex gap-2">
+    <a class="btn btn-primary" href="{{ url_for('add_record') }}">＋ 記録追加</a>
+    <a class="btn btn-outline-success" href="{{ url_for('export_records_csv') }}">CSV</a>
+    {% if pg and pg.prev_page %}<a class="btn btn-outline-secondary" href="{{ url_for('records', page=pg.prev_page, per_page=pg.per_page) }}">← 前</a>{% endif %}
+    {% if pg and pg.next_page %}<a class="btn btn-outline-secondary" href="{{ url_for('records', page=pg.next_page, per_page=pg.per_page) }}">次 →</a>{% endif %}
   </div>
 </div>
-<div class="card p-3">
-  <table class="table table-sm table-striped">
-    <thead>
-      <tr>
-        <th>ID</th><th>{{ _('利用者') }}</th><th>{{ _('食事') }}</th><th>{{ _('服薬') }}</th>
-        <th>{{ _('排泄') }}</th><th>{{ _('体調') }}</th><th>{{ _('メモ') }}</th><th>By</th><th>At</th>
-      </tr>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead class="table-success">
+      <tr><th>ID</th><th>利用者</th><th>食事</th><th>服薬</th><th>排泄</th><th>体調</th><th>メモ</th><th>記入者</th><th>作成</th></tr>
     </thead>
     <tbody>
       {% for r in rows %}
       <tr>
-        <td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td><td>{{ r[3] }}</td>
-        <td>{{ r[4] }}</td><td>{{ r[5] }}</td><td>{{ r[6] }}</td><td>{{ r[7] }}</td><td>{{ r[8] }}</td>
+        <td>{{ r.id }}</td><td>{{ r.user_name }}</td><td>{{ r.meal }}</td><td>{{ r.medication }}</td>
+        <td>{{ r.toilet }}</td><td>{{ r.condition }}</td><td>{{ r.memo }}</td>
+        <td>{{ r.staff_name }}</td><td>{{ r.created_at }}</td>
       </tr>
+      {% else %}
+      <tr><td colspan="9" class="text-center text-muted py-3">まだ記録がありません。</td></tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+<div class="text-center mt-3"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
 {% endblock %}
-
-=======
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>記録一覧</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-  <div class="container py-4">
-    <h2 class="mb-3">📘 記録一覧</h2>
-    <table class="table table-hover bg-white">
-      <thead>
-        <tr>
-          <th>ID</th><th>利用者</th><th>食事</th><th>服薬</th>
-          <th>排泄</th><th>体調</th><th>メモ</th><th>記入者</th><th>日時</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-        <tr>
-          <td>{{ r[0] }}</td>
-          <td>{{ r[1] }}</td>
-          <td>{{ r[2] or '' }}</td>
-          <td>{{ r[3] or '' }}</td>
-          <td>{{ r[4] or '' }}</td>
-          <td>{{ r[5] or '' }}</td>
-          <td>{{ r[6] or '' }}</td>
-          <td>{{ r[7] or '' }}</td>
-          <td>{{ r[8] }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <div class="d-flex gap-2">
-      <a href="{{ url_for('add_record') }}" class="btn btn-success">記録を追加</a>
-      <a href="{{ url_for('home') }}" class="btn btn-outline-secondary">← ホームへ</a>
-    </div>
-  </div>
-</body>
-</html>
->>>>>>> main

@@ -1,86 +1,10 @@
 {% extends "base.html" %}
-{% block body %}
-  <h1 class="text-center fw-bold mb-4" style="letter-spacing:.04em">{{ _("メインメニュー") }}</h1>
-
-  {% if not session.get('staff_name') %}
-    <!-- 未ログイン時：ログインを先頭に出す -->
-    <div class="row g-4 mb-2">
-      <div class="col-12 col-md-8 col-lg-6 mx-auto">
-        <a href="{{ url_for('staff_login') }}" class="text-decoration-none d-block h-100">
-          <div class="menu-card">
-            <div class="menu-emoji">🔐</div>
-            <div class="menu-title">{{ _("ログイン") }}</div>
-          </div>
-        </a>
-      </div>
-    </div>
-  {% endif %}
-
-  <div class="row g-4">
-    <!-- 利用者一覧（管理者） -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('users_page') }}"
-         class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">👥</div>
-          <div class="menu-title">{{ _("利用者一覧") }}</div>
-        </div>
-      </a>
-    </div>
-
-    <!-- 記録入力 -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('add_record') }}"
-         class="text-decoration-none d-block h-100 {% if not session.get('staff_name') %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">📝</div>
-          <div class="menu-title">{{ _("記録入力") }}</div>
-        </div>
-      </a>
-    </div>
-
-    <!-- 記録一覧 -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('records') }}"
-         class="text-decoration-none d-block h-100 {% if not session.get('staff_name') %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">📘</div>
-          <div class="menu-title">{{ _("記録一覧") }}</div>
-        </div>
-      </a>
-    </div>
-
-    <!-- 利用者登録（管理者） -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('add_user') }}"
-         class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">➕</div>
-          <div class="menu-title">{{ _("利用者登録") }}</div>
-        </div>
-      </a>
-    </div>
-
-    <!-- 設定＝管理（スタッフ一覧・QR等／管理者） -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('admin_page') }}"
-         class="text-decoration-none d-block h-100 {% if session.get('staff_role')!='admin' %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">⚙️</div>
-          <div class="menu-title">{{ _("設定") }}</div>
-        </div>
-      </a>
-    </div>
-
-    <!-- 引継ぎボード -->
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{{ url_for('handover') }}"
-         class="text-decoration-none d-block h-100 {% if not session.get('staff_name') %}disabled{% endif %}">
-        <div class="menu-card">
-          <div class="menu-emoji">📁</div>
-          <div class="menu-title">{{ _("引継ぎボード") }}</div>
-        </div>
-      </a>
-    </div>
-  </div>
+{% block content %}
+<div class="list-group">
+  <a class="list-group-item list-group-item-action" href="{{ url_for('records') }}">記録一覧</a>
+  <a class="list-group-item list-group-item-action" href="{{ url_for('add_record') }}">記録追加</a>
+  <a class="list-group-item list-group-item-action" href="{{ url_for('handover') }}">引継ぎ</a>
+  <a class="list-group-item list-group-item-action" href="{{ url_for('users_page') }}">利用者一覧</a>
+  <a class="list-group-item list-group-item-action" href="{{ url_for('admin_page') }}">管理</a>
+</div>
 {% endblock %}

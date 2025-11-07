@@ -1,59 +1,24 @@
 {% extends "base.html" %}
-
-{% macro core() %}
-<div class="container my-4">
-  <h2 class="mb-3">利用者一覧</h2>
-
-  <div class="mb-3 text-end">
-    <a href="{{ url_for('add_user') }}" class="btn btn-primary">＋ 新規登録</a>
-  </div>
-
-  <div class="table-responsive">
-    <table class="table table-striped align-middle">
-      <thead class="table-success">
-        <tr>
-          <th>ID</th>
-          <th>氏名</th>
-          <th>年齢</th>
-          <th>性別</th>
-          <th>部屋番号</th>
-          <th>備考</th>
-          <th style="width:100px;">操作</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for u in users %}
-          <tr>
-            <td>{{ u.id }}</td>
-            <td>{{ u.name }}</td>
-            <td>{{ u.age }}</td>
-            <td>{{ u.gender }}</td>
-            <td>{{ u.room_number }}</td>
-            <td>{{ u.notes }}</td>
-            <td>
-              <a href="{{ url_for('delete_user', user_id=u.id) }}"
-                 class="btn btn-sm btn-outline-danger"
-                 onclick="return confirm('削除してよろしいですか？');">削除</a>
-            </td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="7" class="text-center text-muted py-3">登録された利用者がいません。</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- 🔙 ホームに戻るボタン -->
-  <div class="text-center mt-4">
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
-  </div>
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="mb-0">利用者一覧</h3>
+  <a class="btn btn-primary" href="{{ url_for('add_user') }}">＋ 新規登録</a>
 </div>
-{% endmacro %}
-
-{% block content %}{{ core() }}{% endblock %}
-{% block body %}{{ core() }}{% endblock %}
-{% block main %}{{ core() }}{% endblock %}
-{% block page %}{{ core() }}{% endblock %}
-{% block container %}{{ core() }}{% endblock %}
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead class="table-success">
+      <tr><th>ID</th><th>氏名</th><th>年齢</th><th>性別</th><th>部屋番号</th><th>備考</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td><td>{{ u.name }}</td><td>{{ u.age }}</td><td>{{ u.gender }}</td>
+        <td>{{ u.room_number }}</td><td>{{ u.notes }}</td>
+        <td><a class="btn btn-sm btn-outline-danger" href="{{ url_for('delete_user', user_id=u.id) }}" onclick="return confirm('削除しますか？');">削除</a></td>
+      </tr>
+      {% else %}<tr><td colspan="7" class="text-center text-muted py-3">登録された利用者がいません。</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+<div class="text-center mt-3"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
+{% endblock %}

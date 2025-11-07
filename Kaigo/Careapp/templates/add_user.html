@@ -1,50 +1,18 @@
 {% extends "base.html" %}
-
 {% block content %}
-<div class="container my-4">
-  <h2 class="mb-3">記録追加</h2>
-
-  <form method="post" action="{{ url_for('add_record') }}" class="row g-3">
-    <div class="col-md-12">
-      <label class="form-label">利用者</label>
-      <select name="user_id" class="form-select" required>
-        <option value="">選択してください</option>
-        {% for u in users %}
-          <option value="{{ u.id }}">{{ u.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-
-    <div class="col-md-12">
-      <label class="form-label">食事</label>
-      <input type="text" name="meal" class="form-control">
-    </div>
-    <div class="col-md-12">
-      <label class="form-label">服薬</label>
-      <input type="text" name="medication" class="form-control">
-    </div>
-    <div class="col-md-12">
-      <label class="form-label">排泄</label>
-      <input type="text" name="toilet" class="form-control">
-    </div>
-    <div class="col-md-12">
-      <label class="form-label">体調</label>
-      <input type="text" name="condition" class="form-control">
-    </div>
-    <div class="col-md-12">
-      <label class="form-label">メモ</label>
-      <textarea name="memo" class="form-control" rows="3"></textarea>
-    </div>
-
-    <div class="col-12 d-flex justify-content-start gap-2 mt-3">
-      <button class="btn btn-primary" type="submit">保存</button>
-      <a href="{{ url_for('records') }}" class="btn btn-outline-secondary">戻る</a>
-    </div>
-  </form>
-
-  <!-- 🔙 ホームに戻るボタン -->
-  <div class="text-center mt-4">
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
+<h3 class="mb-3">利用者登録</h3>
+<form method="post" class="row g-3">
+  <div class="col-md-6"><label class="form-label">氏名</label><input class="form-control" name="name" required></div>
+  <div class="col-md-3"><label class="form-label">年齢</label><input class="form-control" type="number" name="age"></div>
+  <div class="col-md-3"><label class="form-label">性別</label>
+    <select name="gender" class="form-select"><option value="">選択してください</option><option>男</option><option>女</option></select>
   </div>
-</div>
+  <div class="col-md-4"><label class="form-label">部屋番号</label><input class="form-control" name="room_number"></div>
+  <div class="col-md-8"><label class="form-label">備考</label><textarea class="form-control" rows="3" name="notes"></textarea></div>
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-success" type="submit">登録</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('users_page') }}">戻る</a>
+  </div>
+</form>
+<div class="text-center mt-4"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
 {% endblock %}

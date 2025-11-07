@@ -1,78 +1,29 @@
 {% extends "base.html" %}
-
-{% macro handover_core() %}
-<div class="container my-4">
-  <h2 class="mb-3">引継ぎ / 申し送り</h2>
-
-  <!-- 追加フォーム -->
-  <form method="post" action="{{ url_for('handover') }}" class="row g-2 mb-4">
-    <div class="col-md-2">
-      <label class="form-label">日付</label>
-      <input name="h_date" type="date" class="form-control" value="{{ today }}">
-    </div>
-    <div class="col-md-2">
-      <label class="form-label">シフト</label>
-      <select name="shift" class="form-select">
-        <option value="day">日勤</option>
-        <option value="evening">準夜</option>
-        <option value="night">夜勤</option>
-      </select>
-    </div>
-    <div class="col-md-6">
-      <label class="form-label">内容</label>
-      <input name="note" class="form-control" placeholder="申し送り内容を入力" required>
-    </div>
-    <div class="col-md-2 d-grid">
-      <label class="form-label invisible">送信</label>
-      <button class="btn btn-success">追加</button>
-    </div>
-  </form>
-
-  <!-- 一覧 -->
-  <div class="table-responsive mb-4">
-    <table class="table table-sm table-striped align-middle">
-      <thead class="table-success">
-        <tr>
-          <th style="width:140px;">日付</th>
-          <th style="width:120px;">シフト</th>
-          <th>内容</th>
-          <th style="width:160px;">スタッフ</th>
-          <th style="width:180px;">登録時刻</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-          <tr>
-            <td>{{ r.h_date }}</td>
-            <td>
-              {% if r.shift == 'day' %}日勤{% elif r.shift == 'evening' %}準夜{% elif r.shift == 'night' %}夜勤{% else %}{{ r.shift }}{% endif %}
-            </td>
-            <td>{{ r.note }}</td>
-            <td>{{ r.staff }}</td>
-            <td>{{ r.created_at }}</td>
-          </tr>
-        {% else %}
-          <tr>
-            <td colspan="5" class="text-center text-muted py-3">本日の申し送りはまだありません。</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+{% block content %}
+<h3 class="mb-3">引継ぎ / 申し送り</h3>
+<form method="post" action="{{ url_for('handover') }}" class="row g-2 mb-3">
+  <div class="col-md-2"><label class="form-label">日付</label><input type="date" class="form-control" name="h_date" value="{{ today }}"></div>
+  <div class="col-md-2"><label class="form-label">シフト</label>
+    <select name="shift" class="form-select">
+      <option value="day">日勤</option><option value="evening">準夜</option><option value="night">夜勤</option>
+    </select>
   </div>
-
-  <!-- 🔙 戻るボタン -->
-  <div class="text-center my-4">
-    <a href="{{ url_for('home') }}" class="btn btn-outline-secondary px-4">← ホームに戻る</a>
-  </div>
+  <div class="col-md-6"><label class="form-label">内容</label><input class="form-control" name="note" required></div>
+  <div class="col-md-2 d-grid"><label class="form-label invisible">送信</label><button class="btn btn-success">追加</button></div>
+</form>
+<div class="table-responsive">
+  <table class="table table-striped align-middle">
+    <thead class="table-success"><tr><th>日付</th><th>シフト</th><th>内容</th><th>スタッフ</th><th>登録時刻</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r.h_date }}</td>
+        <td>{% if r.shift=='day' %}日勤{% elif r.shift=='evening' %}準夜{% elif r.shift=='night' %}夜勤{% else %}{{ r.shift }}{% endif %}</td>
+        <td>{{ r.note }}</td><td>{{ r.staff }}</td><td>{{ r.created_at }}</td>
+      </tr>
+      {% else %}<tr><td colspan="5" class="text-center text-muted py-3">本日の申し送りはまだありません。</td></tr>{% endfor %}
+    </tbody>
+  </table>
 </div>
-{% endmacro %}
-
-{# どのブロック名でも出せるように複数用意 #}
-{% block content %}{{ handover_core() }}{% endblock %}
-{% block body %}{{ handover_core() }}{% endblock %}
-{% block main %}{{ handover_core() }}{% endblock %}
-{% block page %}{{ handover_core() }}{% endblock %}
-{% block page_content %}{{ handover_core() }}{% endblock %}
-{% block container %}{{ handover_core() }}{% endblock %}
-{% block app %}{{ handover_core() }}{% endblock %}
-{% block section %}{{ handover_core() }}{% endblock %}
+<div class="text-center mt-3"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
+{% endblock %}
