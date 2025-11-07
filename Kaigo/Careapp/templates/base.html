@@ -7,54 +7,46 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <style>
-      body.main-wrap {
-        background: #f5faf7;
-        min-height: 100vh;
-        font-family: "Segoe UI", system-ui, sans-serif;
+      body.main-wrap { background:#f5faf7; min-height:100vh; font-family:"Segoe UI", system-ui, sans-serif; }
+      .app-bar { background:#256b3f; color:#fff; padding:.75rem 1.25rem; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+      .app-bar a { color:#fff; text-decoration:none; }
+      .app-title { font-weight:700; font-size:1.2rem; }
+      footer { text-align:center; color:#6c757d; font-size:.9rem; padding:2rem 0; }
+
+      /* 翻訳ウィジェット */
+      #google_translate_element .goog-te-gadget-simple {
+        background:#ffffff;
+        border-radius:10px;
+        padding:2px 6px;
+        border:none;
       }
-      .app-bar {
-        background: #256b3f;
-        color: #fff;
-        padding: 0.75rem 1.25rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-      .app-bar a {
-        color: #fff;
-        text-decoration: none;
-      }
-      .app-title {
-        font-weight: 700;
-        font-size: 1.2rem;
-      }
-      footer {
-        text-align: center;
-        color: #6c757d;
-        font-size: 0.9rem;
-        padding: 2rem 0;
-      }
+      #google_translate_element img.goog-te-gadget-icon { display:none; }
+      #google_translate_element .goog-te-menu-value { color:#1f2937; }
+      .gt-wrap { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
     </style>
   </head>
 
   <body class="main-wrap">
-    <!-- ========== ヘッダーバー ========== -->
+    <!-- ヘッダー -->
     <header class="app-bar">
-      <div class="d-flex align-items-center gap-2">
-        <a href="{{ url_for('home') }}" class="app-title">{{ _("デジタル介護日誌") }}</a>
-      </div>
+      <a href="{{ url_for('home') }}" class="app-title">{{ _("デジタル介護日誌") }}</a>
 
-      <div class="d-flex align-items-center gap-3">
+      <div class="gt-wrap">
+        <!-- ★ Google翻訳ウィジェット -->
+        <div id="google_translate_element"></div>
+        <!-- ★ 日本語に戻すボタン -->
+        <button class="btn btn-sm btn-light" onclick="restoreJapanese()">日本語に戻す</button>
+
         {% if session.get('staff_name') %}
-          <span>{{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}</span>
-          <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light">{{ _("ログアウト") }}</a>
+          <span class="ms-2">{{ session['staff_name'] }}{% if session.get('staff_role') %} ({{ session['staff_role'] }}){% endif %}</span>
+          <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-light ms-2">{{ _("ログアウト") }}</a>
         {% else %}
           <a href="{{ url_for('staff_login') }}" class="btn btn-sm btn-outline-light">{{ _("ログイン") }}</a>
         {% endif %}
       </div>
     </header>
 
-    <!-- ========== メインコンテンツ ========== -->
+    <!-- メイン -->
     <main class="container py-4">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -65,18 +57,14 @@
           </div>
         {% endif %}
       {% endwith %}
-
       {% block content %}{% endblock %}
     </main>
 
-    <!-- ========== フッター ========== -->
-    <footer>
-      <div>© 2025 Digital Care Notes</div>
-      <div id="google_translate_element" class="mt-2"></div>
-    </footer>
+    <!-- フッター -->
+    <footer>© 2025 Digital Care Notes</footer>
 
-    <!-- ========== 多言語翻訳ウィジェット（パターンC：フル対応） ========== -->
-    <script type="text/javascript">
+    <!-- Google翻訳（多言語フル対応） -->
+    <script>
       function googleTranslateElementInit() {
         new google.translate.TranslateElement({
           pageLanguage: 'ja',
@@ -84,11 +72,25 @@
           layout: google.translate.TranslateElement.InlineLayout.SIMPLE
         }, 'google_translate_element');
       }
-    </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
-    <!-- ========== Bootstrap JS ========== -->
+      // 日本語に戻す関数
+      function restoreJapanese() {
+        const iframe = document.querySelector('iframe.goog-te-menu-frame');
+        if (iframe) {
+          const innerDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const jaOption = innerDoc.querySelector('.goog-te-menu2-item span.text:contains("Japanese")');
+          if (jaOption) jaOption.click();
+        }
+        // URLのパラメータ削除（翻訳クエリをリセット）
+        const url = new URL(window.location.href);
+        url.searchParams.delete('hl');
+        url.searchParams.delete('sl');
+        url.searchParams.delete('tl');
+        window.location.href = url.toString();
+      }
+    </script>
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>
-
