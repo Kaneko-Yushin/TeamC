@@ -3,38 +3,49 @@
 <h1 class="text-center fw-bold mb-4">設定</h1>
 
 <style>
-  .set-card{border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s}
-  .set-card:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.1)}
-  a.card-link{text-decoration:none;color:inherit}
+  .set-card {
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .set-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  }
+  a.card-link {
+    text-decoration: none;
+    color: inherit;
+  }
 </style>
 
-<!-- 上段：カード -->
-<div class="row g-4 mb-4">
-  <!-- スタッフ一覧 -->
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('staff_list') }}" class="card-link">
-      <div class="p-4 text-center set-card">
-        <div style="font-size:56px;line-height:1">👥</div>
-        <h3 class="mt-2 mb-1" style="color:#134e2b;">スタッフ一覧</h3>
-        <p class="text-muted mb-0">登録済みスタッフの確認・削除</p>
-      </div>
-    </a>
-  </div>
+<!-- ================== 上段：カード2枚を中央均等配置 ================== -->
+<div class="container">
+  <div class="row justify-content-center g-4 mb-4 text-center">
+    <div class="col-12 col-md-5 col-lg-4">
+      <a href="{{ url_for('staff_list') }}" class="card-link">
+        <div class="p-4 set-card">
+          <div style="font-size:56px;line-height:1;">👥</div>
+          <h3 class="mt-2 mb-1" style="color:#134e2b;">スタッフ一覧</h3>
+          <p class="text-muted mb-0">登録済みスタッフの確認・削除</p>
+        </div>
+      </a>
+    </div>
 
-  <!-- QRコード発行 -->
-  <div class="col-12 col-md-6 col-lg-4">
-    <a href="{{ url_for('generate_qr') }}" class="card-link">
-      <div class="p-4 text-center set-card">
-        <div style="font-size:56px;line-height:1">🔐</div>
-        <h3 class="mt-2 mb-1" style="color:#134e2b;">QRコード発行</h3>
-        <p class="text-muted mb-0">ワンタップログイン用QRを生成</p>
-      </div>
-    </a>
+    <div class="col-12 col-md-5 col-lg-4">
+      <a href="{{ url_for('generate_qr') }}" class="card-link">
+        <div class="p-4 set-card">
+          <div style="font-size:56px;line-height:1;">🔐</div>
+          <h3 class="mt-2 mb-1" style="color:#134e2b;">QRコード発行</h3>
+          <p class="text-muted mb-0">ワンタップログイン用QRを生成</p>
+        </div>
+      </a>
+    </div>
   </div>
 </div>
 
-<!-- 下段：管理者専用 スタッフ登録（権限選択付き） -->
-<div class="p-4" style="border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(0,0,0,.08);">
+<!-- ================== 下段：スタッフ登録フォーム ================== -->
+<div class="p-4 mx-auto" style="max-width: 950px; border-radius:18px;background:#fff;box-shadow:0 12px 32px rgba(0,0,0,.08);">
   <h4 class="mb-3" style="color:#134e2b;">スタッフ登録（管理者のみ）</h4>
   <form method="post" action="{{ url_for('admin_staff_add') }}" class="row g-3">
     <div class="col-md-4">
