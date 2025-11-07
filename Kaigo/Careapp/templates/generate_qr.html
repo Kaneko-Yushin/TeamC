@@ -1,26 +1,35 @@
 {% extends "base.html" %}
 {% block content %}
-<h3 class="mb-3">QRコード発行</h3>
-<form method="post" class="row g-2 mb-4">
-  <div class="col-md-4">
-    <label class="form-label">スタッフ名（既存または新規）</label>
-    <input class="form-control" name="name" list="staff_names">
-    <datalist id="staff_names">
-      {% for n in names %}<option value="{{ n }}">{% endfor %}
-    </datalist>
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">権限</label>
-    <select class="form-select" name="role">
-      <option value="caregiver">caregiver</option>
-      <option value="admin">admin</option>
-    </select>
-  </div>
-  <div class="col-md-2 d-grid align-end">
-    <label class="form-label invisible">発行</label>
-    <button class="btn btn-success">発行</button>
-  </div>
-</form>
-<p class="text-muted">POST後、PNGがダウンロードされます。（/login/&lt;token&gt; でログイン）</p>
-<div class="text-center mt-4"><a class="btn btn-outline-secondary" href="{{ url_for('home') }}">← ホームに戻る</a></div>
+<h1 class="fw-bold mb-4">QRコード発行</h1>
+
+<div class="row g-3">
+  <form method="post" class="col-12 col-lg-8">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">スタッフ名（既存 or 新規）</label>
+        <input class="form-control" name="name" list="staff_names" placeholder="例：鈴木">
+        <datalist id="staff_names">
+          {% for n in names %}<option value="{{ n }}">{% endfor %}
+        </datalist>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">権限</label>
+        <select class="form-select" name="role">
+          <option value="caregiver">caregiver</option>
+          <option value="admin">admin</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-grid">
+        <label class="form-label invisible">dummy</label>
+        <button class="btn btn-success">発行</button>
+      </div>
+    </div>
+    <p class="text-muted mt-3">送信後、PNGがダウンロードされます（/login/&lt;token&gt; でログイン）。</p>
+  </form>
+</div>
+
+<div class="text-center mt-4">
+  <a href="{{ url_for('admin_page') }}" class="btn btn-outline-secondary">← 設定に戻る</a>
+  <a href="{{ url_for('home') }}" class="btn btn-outline-secondary ms-2">← ホームに戻る</a>
+</div>
 {% endblock %}
