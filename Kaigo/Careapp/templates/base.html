@@ -32,7 +32,6 @@
       #google_translate_element img.goog-te-gadget-icon { display:none; }
       #google_translate_element .goog-te-menu-value { color:#1f2937; }
 
-      /* スクロール時のヘッダー余白調整（モバイル） */
       .gt-wrap { display:flex; align-items:center; gap:.5rem; flex-wrap:wrap; }
     </style>
   </head>
@@ -51,13 +50,11 @@
           <!-- 左側メニュー -->
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             {% if session.get('staff_name') %}
-              <!-- 職員メニュー -->
               <li class="nav-item"><a class="nav-link" href="{{ url_for('add_record') }}">📝 {{ _("記録入力") }}</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('records') }}">📖 {{ _("記録一覧") }}</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('handover') }}">🗂️ {{ _("引継ぎ") }}</a></li>
 
               {% if session.get('staff_role') == 'admin' %}
-                <!-- 管理者だけ -->
                 <li class="nav-item dropdown">
                   <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">⚙️ {{ _("管理") }}</a>
                   <ul class="dropdown-menu">
@@ -75,7 +72,6 @@
             {% endif %}
 
             {% if session.get('family_name') %}
-              <!-- 家族メニュー -->
               <li class="nav-item"><a class="nav-link" href="{{ url_for('family_home') }}">🏠 家族メニュー</a></li>
             {% endif %}
           </ul>
@@ -84,7 +80,6 @@
           <div class="d-flex align-items-center gap-2 flex-wrap">
             <div class="gt-wrap">
               <div id="google_translate_element"></div>
-              <button class="btn btn-sm btn-light" onclick="restoreJapanese()">日本語に戻す</button>
             </div>
 
             {% if session.get('staff_name') %}
@@ -129,7 +124,7 @@
     <!-- ===== フッター ===== -->
     <footer>© 2025 Digital Care Notes</footer>
 
-    <!-- ===== Google翻訳：8言語対応 + 日本語復帰（確実版） ===== -->
+    <!-- Google 翻訳（ドロップダウンのみ） -->
     <script>
       function googleTranslateElementInit() {
         new google.translate.TranslateElement({
@@ -137,31 +132,6 @@
           includedLanguages: 'en,vi,zh-CN,id,ne,tl,es,ko',
           layout: google.translate.TranslateElement.InlineLayout.SIMPLE
         }, 'google_translate_element');
-      }
-
-      // 日本語に戻す：googtrans を全階層でリセットし /auto/ja を設定してリロード
-      function restoreJapanese() {
-        try {
-          var host = location.hostname;
-          var parts = host.split('.');
-          function clearSet(domain) {
-            document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + domain;
-            document.cookie = 'googtrans=/auto/ja; path=/; domain=' + domain;
-          }
-          for (var i=0; i<parts.length-1; i++) {
-            clearSet('.' + parts.slice(i).join('.'));
-          }
-          // ドメイン指定なし（ローカルでも効く）
-          document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-          document.cookie = 'googtrans=/auto/ja; path=/';
-
-          // URLの翻訳パラメータを削除
-          var url = new URL(location.href);
-          url.searchParams.delete('hl'); url.searchParams.delete('sl'); url.searchParams.delete('tl');
-          if (url.hash) url.hash = '';
-
-          location.replace(url.toString());
-        } catch(e) { location.reload(true); }
       }
     </script>
     <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
