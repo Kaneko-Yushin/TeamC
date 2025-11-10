@@ -1,163 +1,86 @@
-{% set is_admin = (session.get('staff_role') == 'admin') %}
-{% set is_staff = (session.get('staff_name') is not none) %}
-{% set is_family = (session.get('family_name') is not none) %}
 <!doctype html>
 <html lang="{{ get_locale() or 'ja' }}">
   <head>
     <meta charset="utf-8">
-    <title>{{ _("デジタル介護日誌") }}</title>
+    <title>デジタル介護日誌</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <!-- Favicon -->
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
-
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-      body.main-wrap{ background:#f5faf7; min-height:100vh; font-family:"Segoe UI", system-ui, sans-serif; }
-      .app-bar{ background:#256b3f; color:#fff; }
-      .app-bar a{ color:#fff; text-decoration:none; }
-      .brand{ font-weight:800; letter-spacing:.02em; }
-      .pill{ background:#1e5833; border:none; border-radius:9999px; padding:.35rem .75rem; color:#fff; }
-      .content-wrap{ max-width:1200px; margin:0 auto; padding:20px; }
-
-      /* メニュー共通のカード感（homeや管理などで使う） */
-      .menu-card{
-        background:#fff; border:none; border-radius:18px;
-        box-shadow:0 12px 32px rgba(0,0,0,.08);
-        transition: transform .15s ease, box-shadow .15s ease; height:100%;
-      }
-      .menu-card:hover{ transform:translateY(-2px); box-shadow:0 16px 40px rgba(0,0,0,.1); }
-      a.menu-link{text-decoration:none;color:inherit}
-
-      /* テーブル見やすさ微調整 */
-      table.table th, table.table td{ vertical-align: middle; }
-
-      /* フッター */
-      footer{ color:#6b7d74; font-size:.9rem; }
+      body.main-wrap { background:#f5faf7; min-height:100vh; font-family:"Segoe UI",system-ui,sans-serif; }
+      .app-bar { background:#256b3f; color:#fff; }
+      .app-bar a { color:#fff; text-decoration:none; }
+      .lang-pill { background:#1e5833; border:none; border-radius:9999px; padding:.3rem .8rem; color:#fff; font-size:.85rem; }
+      .lang-pill.outline { background:transparent; border:1px solid #e6f2ec; color:#e6f2ec; }
+      .content-wrap { max-width:1200px; margin:0 auto; padding:20px; }
+      .goog-te-banner-frame.skiptranslate, #goog-gt-tt { display:none !important; }
+      body { top:0 !important; }
     </style>
   </head>
+
   <body class="main-wrap">
-
-    <!-- Top Nav -->
-    <nav class="navbar navbar-expand-lg app-bar">
+    <nav class="navbar navbar-expand app-bar">
       <div class="container-fluid">
-        <a class="navbar-brand brand" href="{{ url_for('home') }}">🩺 {{ _("デジタル介護日誌") }}</a>
-
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topnav" aria-controls="topnav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="topnav">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            {% if is_staff %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('records') }}">{{ _("記録一覧") }}</a></li>
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('add_record') }}">{{ _("記録入力") }}</a></li>
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('handover') }}">{{ _("引継ぎ") }}</a></li>
-              {% if is_admin %}
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('users_page') }}">{{ _("利用者一覧") }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('add_user') }}">{{ _("利用者登録") }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_page') }}">{{ _("設定") }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('camera_page') }}">{{ _("見守りカメラ") }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('album_index') }}">{{ _("アルバム") }}</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_family') }}">{{ _("家族管理") }}</a></li>
-              {% endif %}
-            {% endif %}
-
-            {% if is_family and not is_staff %}
-              <li class="nav-item"><a class="nav-link" href="{{ url_for('family_home') }}">{{ _("家族トップ") }}</a></li>
-            {% endif %}
-          </ul>
-
-          <!-- 右側：言語スイッチ / ログイン状態 -->
-          <div class="d-flex align-items-center gap-2">
-            <!-- Language switch -->
-            <div class="dropdown">
-              <button class="btn btn-outline-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                🌐 {{ _("言語") }}
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" onclick="return setLang('ja')">日本語</a></li>
-                <li><a class="dropdown-item" href="#" onclick="return setLang('en')">English</a></li>
-              </ul>
-            </div>
-
-            {% if is_staff %}
-              <span class="pill">{{ session.get('staff_name') }}{% if is_admin %} / Admin{% endif %}</span>
-              <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">{{ _("ログアウト") }}</a>
-            {% elif is_family %}
-              <span class="pill">{{ session.get('family_name') }} / Family</span>
-              <a class="btn btn-outline-light btn-sm" href="{{ url_for('family_logout') }}">{{ _("ログアウト") }}</a>
-            {% else %}
-              <a class="btn btn-outline-light btn-sm" href="{{ url_for('staff_login') }}">{{ _("スタッフログイン") }}</a>
-              <a class="btn btn-outline-light btn-sm" href="{{ url_for('family_login') }}">{{ _("家族ログイン") }}</a>
-            {% endif %}
+        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">🩺 デジタル介護日誌</a>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <div id="google_translate_element" class="d-none d-md-block"></div>
+          <div class="translate-wrap d-flex gap-1">
+            <button class="lang-pill outline" onclick="return gtSetLang('ja')">日本語</button>
+            <button class="lang-pill outline" onclick="return gtSetLang('en')">English</button>
+            <button class="lang-pill outline" onclick="return gtSetLang('ko')">한국어</button>
+            <button class="lang-pill outline" onclick="return gtSetLang('zh-CN')">中文</button>
+            <button class="lang-pill outline" onclick="return gtSetLang('vi')">Tiếng Việt</button>
           </div>
+
+          {% if session.get('staff_name') %}
+            <span class="lang-pill">{{ session.get('staff_name') }}</span>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('logout') }}">ログアウト</a>
+          {% elif session.get('family_name') %}
+            <span class="lang-pill">{{ session.get('family_name') }}</span>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('family_logout') }}">ログアウト</a>
+          {% else %}
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('staff_login') }}">スタッフ</a>
+            <a class="btn btn-outline-light btn-sm" href="{{ url_for('family_login') }}">家族</a>
+          {% endif %}
         </div>
       </div>
     </nav>
 
-    <!-- Flash messages -->
-    <div class="container mt-3" style="max-width:1000px;">
+    <main class="content-wrap">
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           <div class="alert alert-success shadow-sm" role="alert">
-            {% for m in messages %}
-              <div>{{ m }}</div>
-            {% endfor %}
+            {% for m in messages %}<div>{{ m }}</div>{% endfor %}
           </div>
         {% endif %}
       {% endwith %}
-    </div>
-
-    <!-- Main content -->
-    <main class="content-wrap">
       {% block content %}{% endblock %}
     </main>
 
-    <footer class="content-wrap pb-5">
+    <footer class="content-wrap pb-5 text-center text-muted">
       <hr>
-      <div class="d-flex flex-wrap justify-content-between align-items-center">
-        <div>© {{ now().year if now else "" }} CareApp</div>
-        <div class="text-muted">
-          <a href="{{ url_for('healthz') }}" class="text-muted" style="text-decoration:none;">healthz</a>
-        </div>
-      </div>
+      <small>© 2025 CareApp</small>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- 言語切替：サーバ側のセッションに保存 → googtransクッキー除去 → ハードリロード -->
     <script>
-      function clearGoogleTranslateCookies() {
-        const names = ['googtrans'];
-        const domains = [location.hostname, '.' + location.hostname.replace(/^www\./,'')];
-        names.forEach((name) => {
-          document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-          domains.forEach(d => {
-            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=' + d;
-          });
-        });
-      }
-      function setLang(lang){
-        const next = location.pathname + location.search + location.hash;
-        fetch('/set_language/' + encodeURIComponent(lang) + '?next=' + encodeURIComponent(next), {credentials:'same-origin'})
-          .then(() => { clearGoogleTranslateCookies(); location.reload(true); });
-        return false;
+      const GT_INCLUDED = 'ja,en,ko,zh-CN,vi';
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({pageLanguage:'ja',includedLanguages:GT_INCLUDED,autoDisplay:false}, 'google_translate_element');
       }
     </script>
-
-    <!-- PWA: Service Worker（static/sw.js があれば登録されます） -->
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          const swUrl = '{{ url_for("static", filename="sw.js") }}';
-          fetch(swUrl, {method:'HEAD'}).then(res => {
-            if (res.ok) navigator.serviceWorker.register(swUrl);
-          }).catch(()=>{});
-        });
+      function setCookie(name,value,days){
+        const d=new Date();d.setTime(d.getTime()+(days*24*60*60*1000));
+        const expires="expires="+d.toUTCString();
+        document.cookie=name+"="+value+";"+expires+";path=/";
+      }
+      function gtSetLang(lang){
+        setCookie('googtrans','/ja/'+lang,30);
+        location.reload();
+        return false;
       }
     </script>
   </body>
