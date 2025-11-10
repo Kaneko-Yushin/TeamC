@@ -1,11 +1,13 @@
 from __future__ import annotations
+
 from flask import (
     Flask, render_template, request, redirect, send_file, send_from_directory,
     session, url_for, flash, jsonify
 )
 from functools import wraps
 import sqlite3, qrcode, io, secrets, os, json, csv, math
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
+from flask_babel import Babel
 
 # ===============================
 # 基本設定
@@ -17,27 +19,75 @@ APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
 app = Flask(__name__)
 app.secret_key = APP_SECRET
 
-# ---- Google翻訳前提のダミー多言語フック ----
+# ===============================
+# i18n（JSON辞書）
+# ===============================
+app.config["BABEL_DEFAULT_LOCALE"] = "ja"
+app.config["BABEL_DEFAULT_TIMEZONE"] = "Asia/Tokyo"
+app.config["LANGUAGES"] = ["ja", "en"]
+babel = Babel(app)
+
 def get_locale():
-    return "ja"
+    lang = session.get("lang")
+    if lang in app.config["LANGUAGES"]:
+        return lang
+    return request.accept_languages.best_match(app.config["LANGUAGES"]) or "ja"
 
-def _(s, **kwargs):
-    try:
-        return s % kwargs if kwargs else s
-    except Exception:
-        return s
+babel.init_app(app, locale_selector=get_locale)
 
-app.jinja_env.globals.update(get_locale=get_locale, _=_)
+def _load_json_translations():
+    base = APP_ROOT
+    candidates = [
+        lambda lang: os.path.join(base, "translations", f"{lang}.json"),
+        lambda lang: os.path.join(base, f"{lang}.json"),
+    ]
+    data = {}
+    for lang in app.config["LANGUAGES"]:
+        loaded = {}
+        for fn in candidates:
+            p = fn(lang)
+            if os.path.exists(p):
+                try:
+                    with open(p, encoding="utf-8") as f:
+                        loaded = json.load(f)
+                except Exception as e:
+                    print(f"[i18n] load fail {p}: {e}")
+                    loaded = {}
+                break
+        data[lang] = loaded
+    return data
 
-# セッションを長めに維持
-@app.before_request
-def _make_session_permanent():
-    session.permanent = True
-    app.permanent_session_lifetime = timedelta(days=30)
+TRANSLATIONS = _load_json_translations()
 
-@app.context_processor
-def inject_now():
-    return {"now": datetime.now}
+def _t(key, **kwargs):
+    s = TRANSLATIONS.get(get_locale(), {}).get(key, key)
+    if kwargs:
+        try: s = s % kwargs
+        except Exception: pass
+    return s
+
+_ = _t
+app.jinja_env.globals.update(_=_, get_locale=get_locale)
+
+@app.get("/set_language/<lang>")
+def set_language(lang):
+    lang = (lang or "ja").lower()
+    if lang in app.config["LANGUAGES"]:
+        session["lang"] = lang
+        flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.get("/i18n/reload")
+def i18n_reload():
+    global TRANSLATIONS
+    TRANSLATIONS = _load_json_translations()
+    flash(_("言語を切り替えました。"))
+    return redirect(request.referrer or url_for("home"))
+
+@app.get("/i18n/debug")
+def i18n_debug():
+    lang = get_locale()
+    return {"current_lang": lang, "keys_loaded": len(TRANSLATIONS.get(lang, {}))}
 
 # ===============================
 # DB
@@ -56,22 +106,24 @@ def get_connection():
 def init_db():
     with get_connection() as conn:
         c = conn.cursor()
-        c.executescript("""
+        # 利用者
+        c.execute("""
         CREATE TABLE IF NOT EXISTS users(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          age INTEGER,
-          gender TEXT,
-          room_number TEXT,
-          notes TEXT
-        );
+          name TEXT NOT NULL, age INTEGER, gender TEXT,
+          room_number TEXT, notes TEXT
+        )""")
+        # 職員
+        c.execute("""
         CREATE TABLE IF NOT EXISTS staff(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE,
           password TEXT NOT NULL,
           role TEXT NOT NULL,
           login_token TEXT
-        );
+        )""")
+        # 記録
+        c.execute("""
         CREATE TABLE IF NOT EXISTS records(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
@@ -79,7 +131,9 @@ def init_db():
           staff_name TEXT,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        );
+        )""")
+        # 引継ぎ
+        c.execute("""
         CREATE TABLE IF NOT EXISTS handover(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           h_date TEXT NOT NULL,
@@ -87,27 +141,35 @@ def init_db():
           note TEXT NOT NULL,
           staff TEXT NOT NULL,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+        )""")
+        # 家族アカウント
+        c.execute("""
         CREATE TABLE IF NOT EXISTS family(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE,
           password TEXT NOT NULL,
           role TEXT NOT NULL DEFAULT 'family'
-        );
+        )""")
+        # 家族と利用者の紐付け
+        c.execute("""
         CREATE TABLE IF NOT EXISTS family_map(
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           family_name TEXT NOT NULL,
           user_id INTEGER NOT NULL,
           UNIQUE(family_name, user_id)
-        );
-        """)
+        )""")
+        # Index
+        c.execute("CREATE INDEX IF NOT EXISTS idx_records_user_id ON records(user_id)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_records_created ON records(created_at DESC)")
+        c.execute("CREATE INDEX IF NOT EXISTS idx_handover_date ON handover(h_date, shift)")
         conn.commit()
-    # 初回管理者
+
+    # 初回管理者自動作成
     with get_connection() as conn:
         c = conn.cursor()
         c.execute("SELECT COUNT(*) AS cnt FROM staff WHERE role='admin'")
         if (c.fetchone()["cnt"] or 0) == 0:
-            c.execute("INSERT INTO staff(name,password,role) VALUES(?,?,?)",
+            c.execute("INSERT OR IGNORE INTO staff(name,password,role) VALUES(?,?,?)",
                       ("admin", "admin", "admin"))
             conn.commit()
 
@@ -120,7 +182,7 @@ def login_required(f):
     @wraps(f)
     def w(*a, **kw):
         if "staff_name" not in session:
-            flash("ログインが必要です。")
+            flash(_("ログインが必要です。"))
             return redirect(url_for("staff_login"))
         return f(*a, **kw)
     return w
@@ -129,7 +191,7 @@ def admin_required(f):
     @wraps(f)
     def w(*a, **kw):
         if session.get("staff_role") != "admin":
-            return "管理者権限が必要です。", 403
+            return _("管理者権限が必要です。"), 403
         return f(*a, **kw)
     return w
 
@@ -137,11 +199,14 @@ def family_login_required(f):
     @wraps(f)
     def w(*a, **kw):
         if session.get("family_name") is None:
-            flash("家族ログインが必要です。")
+            flash(_("家族ログインが必要です。"))
             return redirect(url_for("family_login"))
         return f(*a, **kw)
     return w
 
+# ===============================
+# 共通
+# ===============================
 def paginate(total: int, page: int, per_page: int):
     pages = max(1, math.ceil(total / per_page))
     page = max(1, min(page, pages))
@@ -156,11 +221,43 @@ def paginate(total: int, page: int, per_page: int):
 # ===============================
 @app.get("/")
 def home():
-    return render_template("home.html")
+    try:
+        return render_template("home.html")
+    except Exception:
+        # テンプレが無くても最低限動く簡易ホーム
+        return (
+            "<h1>デジタル介護日誌</h1>"
+            "<p><a href='/staff_login'>スタッフログイン</a> | "
+            "<a href='/family_login'>家族ログイン</a> | "
+            "<a href='/records'>記録</a> | "
+            "<a href='/handover'>引継ぎ</a> | "
+            "<a href='/users'>利用者</a></p>"
+        )
 
 # ===============================
-# スタッフ：ログイン/ログアウト
+# 職員：登録/ログイン/管理
 # ===============================
+@app.route("/staff_register", methods=["GET", "POST"])
+def staff_register():
+    if request.method == "POST":
+        name = (request.form.get("name") or "").strip()
+        password = (request.form.get("password") or "").strip()
+        role = "caregiver"
+        if not name or not password:
+            flash(_("名前とパスワードを入力してください。"))
+            return redirect(url_for("staff_register"))
+        with get_connection() as conn:
+            c = conn.cursor()
+            try:
+                c.execute("INSERT INTO staff(name,password,role) VALUES (?,?,?)",
+                          (name, password, role))
+                conn.commit()
+                flash(_("登録完了。ログインしてください。"))
+                return redirect(url_for("staff_login"))
+            except sqlite3.IntegrityError:
+                flash(_("同名のスタッフがすでに存在します。"))
+    return render_template("staff_register.html")
+
 @app.route("/staff_login", methods=["GET","POST"])
 def staff_login():
     if request.method == "POST":
@@ -168,31 +265,28 @@ def staff_login():
         password = request.form.get("password")
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("SELECT name, role FROM staff WHERE name=? AND password=?", (name, password))
+            c.execute("SELECT name, role FROM staff WHERE name=? AND password=?",
+                      (name, password))
             row = c.fetchone()
         if row:
             session.clear()
             session["staff_name"], session["staff_role"] = row["name"], row["role"]
-            flash(f"{row['name']} さんでログインしました。")
+            flash(_("%(n)s さんでログインしました。", n=row["name"]))
             return redirect(url_for("home"))
-        flash("名前またはパスワードが違います。")
+        flash(_("名前またはパスワードが間違っています。"))
     return render_template("staff_login.html")
 
 @app.get("/logout")
 def logout():
     session.clear()
-    flash("ログアウトしました。")
+    flash(_("ログアウトしました。"))
     return redirect(url_for("home"))
 
-# ===============================
-# 管理者ページ
-# ===============================
 @app.get("/admin")
 @admin_required
 def admin_page():
     return render_template("admin.html")
 
-# スタッフ追加（管理者）
 @app.post("/admin/staff/add")
 @admin_required
 def admin_staff_add():
@@ -200,7 +294,7 @@ def admin_staff_add():
     password = (request.form.get("password") or "").strip()
     role = (request.form.get("role") or "caregiver").strip()
     if not name or not password:
-        flash("名前とパスワードを入力してください。")
+        flash(_("名前とパスワードを入力してください。"))
         return redirect(url_for("admin_page"))
     with get_connection() as conn:
         c = conn.cursor()
@@ -208,12 +302,12 @@ def admin_staff_add():
             c.execute("INSERT INTO staff(name,password,role) VALUES(?,?,?)",
                       (name, password, role))
             conn.commit()
-            flash(f"スタッフ「{name}」を登録しました（role={role}）。")
+            flash(_("スタッフ「%(n)s」を登録しました（role=%(r)s）。", n=name, r=role))
         except sqlite3.IntegrityError:
             c.execute("UPDATE staff SET password=?, role=? WHERE name=?",
                       (password, role, name))
             conn.commit()
-            flash(f"既存スタッフ「{name}」を更新しました（role={role}）。")
+            flash(_("既存スタッフ「%(n)s」を更新しました（role=%(r)s）。", n=name, r=role))
     return redirect(url_for("admin_page"))
 
 @app.get("/staff_list")
@@ -232,10 +326,9 @@ def delete_staff(sid):
         c = conn.cursor()
         c.execute("DELETE FROM staff WHERE id=?", (sid,))
         conn.commit()
-    flash("スタッフを削除しました。")
+    flash(_("スタッフを削除しました。"))
     return redirect(url_for("staff_list"))
 
-# QRログイン
 @app.route("/generate_qr", methods=["GET","POST"])
 @admin_required
 def generate_qr():
@@ -278,10 +371,10 @@ def login_by_qr(token):
         c.execute("SELECT name, role FROM staff WHERE login_token=?", (token,))
         row = c.fetchone()
     if not row:
-        return "無効なQRコードです。", 403
+        return _("無効なQRコードです。"), 403
     session.clear()
     session["staff_name"], session["staff_role"] = row["name"], row["role"]
-    flash(f"{row['name']} さんでログインしました。")
+    flash(_("%(n)s さんでログインしました。", n=row["name"]))
     return redirect(url_for("home"))
 
 # ===============================
@@ -312,7 +405,7 @@ def add_user():
                 (name, age, gender, room, notes)
             )
             conn.commit()
-        flash("利用者を登録しました。")
+        flash(_("利用者を登録しました。"))
         return redirect(url_for("users_page"))
     return render_template("add_user.html")
 
@@ -323,7 +416,7 @@ def delete_user(user_id):
         c = conn.cursor()
         c.execute("DELETE FROM users WHERE id=?", (user_id,))
         conn.commit()
-    flash("利用者を削除しました。")
+    flash(_("利用者を削除しました。"))
     return redirect(url_for("users_page"))
 
 # ===============================
@@ -367,8 +460,7 @@ def export_records_csv():
         "id","user_name","meal","medication","toilet","condition","memo","staff_name","created_at"
     ])
     writer.writeheader()
-    for r in rows:
-        writer.writerow(r)
+    for r in rows: writer.writerow(r)
     mem = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return send_file(mem, as_attachment=True,
@@ -410,7 +502,7 @@ def add_record():
                 VALUES(?,?,?,?,?,?,?)
             """, (user_id, meal, medication, toilet, condition, memo, staff_name))
             conn.commit()
-        flash("記録を保存しました。")
+        flash(_("記録を保存しました。"))
         return redirect(url_for("records"))
     return render_template("add_record.html", users=users)
 
@@ -430,7 +522,7 @@ def handover():
             c.execute("INSERT INTO handover(h_date, shift, note, staff) VALUES(?,?,?,?)",
                       (h_date, shift, note, staff))
             conn.commit()
-        flash("引継ぎを追加しました。")
+        flash(_("引継ぎを追加しました。"))
         return redirect(url_for("handover"))
     h_date = request.args.get("date") or date.today().isoformat()
     page = int(request.args.get("page", 1))
@@ -468,7 +560,7 @@ def api_handover():
     return jsonify({"handover": rows})
 
 # ===============================
-# 家族向け
+# 家族向け（ログイン＆閲覧）
 # ===============================
 @app.route("/family_login", methods=["GET","POST"])
 def family_login():
@@ -477,20 +569,21 @@ def family_login():
         password = request.form.get("password","").strip()
         with get_connection() as conn:
             c = conn.cursor()
-            c.execute("SELECT name FROM family WHERE name=? AND password=?", (name, password))
+            c.execute("SELECT name FROM family WHERE name=? AND password=?",
+                      (name, password))
             row = c.fetchone()
         if row:
             session.clear()
             session["family_name"] = row["name"]
-            flash(f"{row['name']} さんで家族ログインしました。")
+            flash(_("%(n)s さんで家族ログインしました。", n=row["name"]))
             return redirect(url_for("family_home"))
-        flash("名前またはパスワードが間違っています。")
+        flash(_("名前またはパスワードが間違っています。"))
     return render_template("family_login.html")
 
 @app.get("/family_logout")
 def family_logout():
     session.pop("family_name", None)
-    flash("家族ログアウトしました。")
+    flash(_("家族ログアウトしました。"))
     return redirect(url_for("home"))
 
 @app.get("/family")
@@ -515,9 +608,10 @@ def family_records(user_id):
     fam = session["family_name"]
     with get_connection() as conn:
         c = conn.cursor()
-        c.execute("SELECT 1 FROM family_map WHERE family_name=? AND user_id=?", (fam, user_id))
+        c.execute("SELECT 1 FROM family_map WHERE family_name=? AND user_id=?",
+                  (fam, user_id))
         if not c.fetchone():
-            return "閲覧権限がありません。", 403
+            return _("閲覧権限がありません。"), 403
         c.execute("""
           SELECT r.created_at, r.meal, r.medication, r.toilet, r.condition
             FROM records r
@@ -528,7 +622,9 @@ def family_records(user_id):
         rows = c.fetchall()
     return render_template("family_records.html", rows=rows)
 
-# 家族管理（管理者）
+# ===============================
+# 家族アカウント管理（管理者）
+# ===============================
 @app.get("/admin/family")
 @admin_required
 def admin_family():
@@ -548,7 +644,7 @@ def admin_family_add():
     name = (request.form.get("name") or "").strip()
     password = (request.form.get("password") or "").strip()
     if not name or not password:
-        flash("名前とパスワードを入力してください。")
+        flash(_("名前とパスワードを入力してください。"))
         return redirect(url_for("admin_family"))
     with get_connection() as conn:
         c = conn.cursor()
@@ -556,9 +652,9 @@ def admin_family_add():
             c.execute("INSERT INTO family(name,password,role) VALUES(?,?,?)",
                       (name, password, "family"))
             conn.commit()
-            flash(f"家族アカウント「{name}」を作成しました。")
+            flash(_("家族アカウント「%(n)s」を作成しました。", n=name))
         except sqlite3.IntegrityError:
-            flash("同名の家族アカウントが存在します。")
+            flash(_("同名の家族アカウントが存在します。"))
     return redirect(url_for("admin_family"))
 
 @app.post("/admin/family/delete/<int:fid>")
@@ -573,7 +669,7 @@ def admin_family_delete(fid):
             c.execute("DELETE FROM family WHERE id=?", (fid,))
             c.execute("DELETE FROM family_map WHERE family_name=?", (name,))
             conn.commit()
-            flash(f"家族アカウント「{name}」を削除しました。")
+            flash(_("家族アカウント「%(n)s」を削除しました。", n=name))
     return redirect(url_for("admin_family"))
 
 @app.post("/admin/family/map")
@@ -582,7 +678,7 @@ def admin_family_map():
     family_name = request.form.get("family_name")
     user_id = request.form.get("user_id")
     if not family_name or not user_id:
-        flash("家族名と利用者を選択してください。")
+        flash(_("家族名と利用者を選択してください。"))
         return redirect(url_for("admin_family"))
     with get_connection() as conn:
         c = conn.cursor()
@@ -590,9 +686,9 @@ def admin_family_map():
             c.execute("INSERT INTO family_map(family_name,user_id) VALUES(?,?)",
                       (family_name, user_id))
             conn.commit()
-            flash("紐づけました。")
+            flash(_("紐づけました。"))
         except sqlite3.IntegrityError:
-            flash("すでに紐づけ済みです。")
+            flash(_("すでに紐づけ済みです。"))
     return redirect(url_for("admin_family"))
 
 @app.post("/admin/family/unmap")
@@ -605,7 +701,7 @@ def admin_family_unmap():
         c.execute("DELETE FROM family_map WHERE family_name=? AND user_id=?",
                   (family_name, user_id))
         conn.commit()
-    flash("紐づけを解除しました。")
+    flash(_("紐づけを解除しました。"))
     return redirect(url_for("admin_family"))
 
 # ===============================
@@ -631,10 +727,8 @@ def album_index():
 @admin_required
 def album_upload():
     f = request.files.get("photo")
-    if not f:
-        return "no file", 400
-    if f.mimetype not in ("image/jpeg", "image/png"):
-        return "bad type", 400
+    if not f: return "no file", 400
+    if f.mimetype not in ("image/jpeg","image/png"): return "bad type", 400
     data = f.read()
     if len(data) > 2 * 1024 * 1024:
         return "too large", 400
@@ -650,16 +744,15 @@ def album_upload():
 def album_delete(filename):
     folder = os.path.join(app.root_path, "static", "album")
     target = os.path.abspath(os.path.join(folder, filename))
-    base = os.path.abspath(folder)
-    if not target.startswith(base):
+    if not target.startswith(os.path.abspath(folder)):
         return "bad path", 400
     if os.path.exists(target):
         os.remove(target)
-        flash("写真を削除しました。")
+        flash(_("写真を削除しました。"))
     return redirect(url_for("album_index"))
 
 # ===============================
-# その他
+# 雑多
 # ===============================
 @app.get("/favicon.ico")
 def favicon():
@@ -685,5 +778,8 @@ def not_found(e):
     except Exception:
         return "Not Found", 404
 
+# ===============================
+# 起動
+# ===============================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
