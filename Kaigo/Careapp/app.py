@@ -6,7 +6,7 @@ from flask import (
 )
 from functools import wraps
 import sqlite3, qrcode, io, secrets, os, json, csv, math
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from flask_babel import Babel
 
 # ===============================
@@ -18,6 +18,17 @@ APP_SECRET = os.environ.get("APP_SECRET") or os.urandom(16)
 
 app = Flask(__name__)
 app.secret_key = APP_SECRET
+
+# セッション維持（言語設定などを持続させる）
+@app.before_request
+def _make_session_permanent():
+    session.permanent = True
+    app.permanent_session_lifetime = timedelta(days=30)
+
+# Jinja で now() を使えるように
+@app.context_processor
+def inject_now():
+    return {"now": datetime.now}
 
 # ===============================
 # i18n（JSON辞書）
@@ -62,8 +73,10 @@ TRANSLATIONS = _load_json_translations()
 def _t(key, **kwargs):
     s = TRANSLATIONS.get(get_locale(), {}).get(key, key)
     if kwargs:
-        try: s = s % kwargs
-        except Exception: pass
+        try:
+            s = s % kwargs
+        except Exception:
+            pass
     return s
 
 _ = _t
@@ -75,7 +88,8 @@ def set_language(lang):
     if lang in app.config["LANGUAGES"]:
         session["lang"] = lang
         flash(_("言語を切り替えました。"))
-    return redirect(request.referrer or url_for("home"))
+    next_url = request.args.get("next") or request.referrer or url_for("home")
+    return redirect(next_url)
 
 @app.get("/i18n/reload")
 def i18n_reload():
@@ -454,13 +468,14 @@ def export_records_csv():
           FROM records r JOIN users u ON r.user_id = u.id
          ORDER BY r.id DESC
         """)
-        rows = c.fetchall()
+    rows = c.fetchall()
     buf = io.StringIO()
     writer = csv.DictWriter(buf, fieldnames=[
         "id","user_name","meal","medication","toilet","condition","memo","staff_name","created_at"
     ])
     writer.writeheader()
-    for r in rows: writer.writerow(r)
+    for r in rows:
+        writer.writerow(r)
     mem = io.BytesIO(buf.getvalue().encode("utf-8-sig"))
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     return send_file(mem, as_attachment=True,
@@ -727,8 +742,10 @@ def album_index():
 @admin_required
 def album_upload():
     f = request.files.get("photo")
-    if not f: return "no file", 400
-    if f.mimetype not in ("image/jpeg","image/png"): return "bad type", 400
+    if not f:
+        return "no file", 400
+    if f.mimetype not in ("image/jpeg", "image/png"):
+        return "bad type", 400
     data = f.read()
     if len(data) > 2 * 1024 * 1024:
         return "too large", 400
@@ -744,7 +761,8 @@ def album_upload():
 def album_delete(filename):
     folder = os.path.join(app.root_path, "static", "album")
     target = os.path.abspath(os.path.join(folder, filename))
-    if not target.startswith(os.path.abspath(folder)):
+    base = os.path.abspath(folder)
+    if not target.startswith(base):
         return "bad path", 400
     if os.path.exists(target):
         os.remove(target)
